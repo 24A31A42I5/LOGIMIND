@@ -2,6 +2,7 @@ from collections import defaultdict
 from typing import Any
 
 from services.hindsightService import hindsight_service
+from services.llmService import llm_service
 from services.seedService import get_demo_store
 
 
@@ -34,12 +35,22 @@ def generate_investigation(area: str = 'Area C') -> dict[str, Any]:
             'confidence': 86,
         }
     ]
+    llm_recommendation = llm_service.generate_recommendation({
+        'area': area,
+        'average_delivery_minutes': avg_time,
+        'delay_rate_percent': delay_rate,
+        'peak_hours': peak_hours,
+        'historical_memory': historical_memory,
+    })
+    if llm_recommendation:
+        recommendations[0].update(llm_recommendation)
 
     return {
         'area': area,
         'summary': f'{area} is experiencing elevated evening delivery pressure. Current evidence shows sustained delays at the 6 PM to 8 PM window.',
         'recommendations': recommendations,
         'memory_available': memory_available,
+        'llm_used': bool(llm_recommendation),
     }
 
 

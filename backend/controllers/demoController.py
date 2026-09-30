@@ -1,5 +1,6 @@
 from services.hindsightService import hindsight_service
 from services.logisticsAgent import close_day_summary
+from services.mongoRebuildService import rebuild_linked_database
 from services.seedService import get_demo_store, reset_demo_store
 
 
@@ -54,3 +55,11 @@ def close_demo_day() -> dict:
     if retained.get('status') == 'fallback':
         summary['message'] = 'Historical memory currently unavailable; day summary was not retained.'
     return summary
+
+
+def seed_demo_database() -> dict:
+    return rebuild_linked_database()
+
+
+def rebuild_demo_database() -> dict:
+    return rebuild_linked_database()

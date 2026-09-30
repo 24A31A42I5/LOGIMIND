@@ -5,6 +5,8 @@ from controllers.demoController import (
     close_demo_day,
     load_demo_day,
     reset_demo,
+    seed_demo_database,
+    rebuild_demo_database,
     trigger_area_c_delay,
     trigger_failed_delivery,
     trigger_successful_intervention,
@@ -45,3 +47,13 @@ async def trigger_intervention():
 @router.post('/close')
 async def close():
     return close_demo_day()
+
+
+@router.post('/seed-database')
+async def seed_database():
+    return seed_demo_database()
+
+
+@router.post('/rebuild-database')
+async def rebuild_database():
+    return rebuild_demo_database()
