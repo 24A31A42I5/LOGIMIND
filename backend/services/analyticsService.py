@@ -110,26 +110,16 @@ def get_area_analytics() -> list[dict[str, Any]]:
 
 
 def get_hotspots() -> list[dict[str, Any]]:
-    return [
-        {'name': 'Area C', 'type': 'hotspot', 'deliveries': 344, 'average_delivery_time': 47, 'delay_rate': 21, 'peak_period': '6 PM – 8 PM', 'reason': 'High delivery density + longer routes'},
-        {'name': 'Area D', 'type': 'problem', 'deliveries': 198, 'average_delivery_time': 53, 'delay_rate': 25, 'peak_period': '4 PM – 6 PM', 'reason': 'Recurring operational issues and low route efficiency'},
-    ]
+    return [{**item, 'type': 'hotspot' if item['delay_rate'] >= 20 else 'stable'} for item in get_overall_analytics()['area_hotspots']]
 
 
 def get_trends() -> list[dict[str, Any]]:
-    return [
-        {'date': '2026-08-01', 'deliveries': 124, 'avg_time': 40},
-        {'date': '2026-08-07', 'deliveries': 136, 'avg_time': 43},
-        {'date': '2026-08-15', 'deliveries': 152, 'avg_time': 47},
-        {'date': '2026-08-25', 'deliveries': 168, 'avg_time': 46},
-    ]
+    by_date: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    for shipment in get_shipments():
+        by_date[shipment['dispatch_time'][:10]].append(shipment)
+    return [{'date': date, 'deliveries': len(items), 'avg_time': round(sum(item['duration_minutes'] for item in items) / len(items), 2)} for date, items in sorted(by_date.items())]
 
 
 def get_monthly_analytics() -> dict[str, Any]:
-    return {
-        'month': 'August 2026',
-        'total_deliveries': 3120,
-        'average_delivery_time': 42,
-        'delay_rate': 17,
-        'failed_delivery_rate': 4,
-    }
+    shipments = get_shipments()
+    return {'month': datetime.now().strftime('%B %Y'), 'total_deliveries': len(shipments), 'average_delivery_time': round(sum(item['duration_minutes'] for item in shipments) / len(shipments), 2) if shipments else 0, 'delay_rate': _percent(sum(item['status'] in {'Delayed', 'Failed'} for item in shipments), len(shipments)), 'failed_delivery_rate': _percent(sum(item['status'] == 'Failed' for item in shipments), len(shipments))}

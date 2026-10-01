@@ -1,0 +1,20 @@
+{
+    "businessType": "restaurant",
+    "synthetic": true,
+    "orders": [
+        {
+            "order_id": "ORD-001",
+            "product": "Thali",
+            "area": "Area C",
+            "demand": 92,
+            "sales": 4200
+        },
+        {
+            "order_id": "ORD-002",
+            "product": "Biryani",
+            "area": "Area C",
+            "demand": 88,
+            "sales": 3600
+        }
+    ]
+}

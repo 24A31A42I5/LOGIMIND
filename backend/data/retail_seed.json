@@ -1,0 +1,27 @@
+{
+    "businessType": "retail",
+    "synthetic": true,
+    "sales": [
+        {
+            "sale_id": "SALE-001",
+            "product": "Home essentials",
+            "location": "Area C",
+            "units": 94,
+            "demand": 84
+        },
+        {
+            "sale_id": "SALE-002",
+            "product": "Personal care",
+            "location": "Area C",
+            "units": 71,
+            "demand": 76
+        },
+        {
+            "sale_id": "SALE-003",
+            "product": "Stationery",
+            "location": "Area B",
+            "units": 42,
+            "demand": 54
+        }
+    ]
+}

@@ -6,6 +6,8 @@ import { getRecentMemory } from '../api/memory';
 import RecommendationCard from '../components/ai/RecommendationCard';
 import MemoryEvidenceModal from '../components/ai/MemoryEvidenceModal';
 import ColdVsMemoryComparison from '../components/ai/ColdVsMemoryComparison';
+import DomainWorkspacePage from './DomainWorkspacePage';
+import { useBusiness } from '../context/useBusiness';
 
 const hourData = [
   { time: '08', deliveries: 26 },
@@ -25,6 +27,7 @@ const areaData = [
 ];
 
 export default function AiAnalyzerPage() {
+  const { profile } = useBusiness();
   const [overall, setOverall] = useState(null);
   const [daily, setDaily] = useState(null);
   const [areas, setAreas] = useState([]);
@@ -33,8 +36,12 @@ export default function AiAnalyzerPage() {
   const [memories, setMemories] = useState([]);
   const [showMemory, setShowMemory] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
+    if (profile?.businessType !== 'distributor') {
+      return;
+    }
     const load = async () => {
       try {
         const [overallRes, dailyRes, areaRes, insightRes, memoryRes] = await Promise.all([
@@ -51,15 +58,19 @@ export default function AiAnalyzerPage() {
         setMemories(memoryRes.data);
         const investigationRes = await investigateArea('Area C');
         setInvestigation(investigationRes.data);
+      } catch {
+        setError('AI analysis is unavailable right now.');
       } finally {
         setLoading(false);
       }
     };
 
     load();
-  }, []);
+  }, [profile?.businessType]);
 
+  if (profile?.businessType !== 'distributor') return <DomainWorkspacePage />;
   if (loading) return <div className="p-6 text-slate-600">Loading analytics...</div>;
+  if (error) return <div className="rounded-xl border border-amber-200 bg-amber-50 p-6 text-amber-800">{error}</div>;
 
   const trendData = [
     { date: 'Aug 05', value: 42 },

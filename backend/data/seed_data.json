@@ -1,0 +1,12 @@
+{
+    "version": "v2",
+    "synthetic": true,
+    "businessTypes": [
+        "distributor",
+        "restaurant",
+        "raw_material",
+        "retail",
+        "service_provider"
+    ],
+    "note": "Synthetic seed records are for local demonstrations and are not external geographic evidence."
+}

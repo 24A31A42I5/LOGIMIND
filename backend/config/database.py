@@ -15,7 +15,7 @@ class DatabaseClient:
         if cls._client is not None:
             return cls._client
 
-        mongo_uri = os.getenv('MONGO_URI')
+        mongo_uri = os.getenv('MONGODB_URI') or os.getenv('MONGO_URI')
         if not mongo_uri:
             return None
 
@@ -31,7 +31,7 @@ class DatabaseClient:
         client = cls.get_client()
         if client is None:
             return None
-        return client[os.getenv('DATABASE_NAME', 'logimind')]
+        return client[os.getenv('MONGODB_DATABASE') or os.getenv('DATABASE_NAME', 'logimind')]
 
 
 def get_database() -> Any:

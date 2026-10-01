@@ -3,17 +3,12 @@ import { useState } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import DemoToolbar from './DemoToolbar';
-
-const navItems = [
-  { to: '/dashboard', label: 'Dashboard' },
-  { to: '/delivery-agents', label: 'Delivery Agents' },
-  { to: '/ai-analyzer', label: 'AI Analyzer' },
-  { to: '/shipments', label: 'Shipments' },
-  { to: '/memory', label: 'Memory' },
-];
+import { useBusiness } from '../../context/useBusiness';
 
 export default function Shell() {
   const [open, setOpen] = useState(false);
+  const { config } = useBusiness();
+  const navItems = [{ to: '/dashboard', label: 'Dashboard' }, ...config.navigation];
 
   return (
     <div className="min-h-screen bg-slate-100 text-slate-900">
@@ -42,7 +37,7 @@ export default function Shell() {
           </header>
           <DemoToolbar />
 
-          <main className="p-4 md:p-6">
+          <main className="p-4 pb-32 md:p-6 md:pb-32">
             <Outlet />
           </main>
         </div>

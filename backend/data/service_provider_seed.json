@@ -1,0 +1,27 @@
+{
+    "businessType": "service_provider",
+    "synthetic": true,
+    "bookings": [
+        {
+            "booking_id": "BOOK-001",
+            "service": "Home maintenance",
+            "location": "Area C",
+            "demand": 89,
+            "customer_density": 84
+        },
+        {
+            "booking_id": "BOOK-002",
+            "service": "Home maintenance",
+            "location": "Area C",
+            "demand": 81,
+            "customer_density": 79
+        },
+        {
+            "booking_id": "BOOK-003",
+            "service": "Appliance repair",
+            "location": "Area D",
+            "demand": 63,
+            "customer_density": 65
+        }
+    ]
+}

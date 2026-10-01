@@ -4,12 +4,13 @@ import { getRecentMemory, getMemoryStats } from '../api/memory';
 export default function MemoryTimelinePage() {
   const [memories, setMemories] = useState([]);
   const [stats, setStats] = useState(null);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     Promise.all([getRecentMemory(), getMemoryStats()]).then(([memoriesRes, statsRes]) => {
       setMemories(memoriesRes.data);
       setStats(statsRes.data);
-    });
+    }).catch(() => setError('Historical memory is unavailable right now.'));
   }, []);
 
   return (
@@ -18,6 +19,7 @@ export default function MemoryTimelinePage() {
         <p className="text-sm font-medium uppercase tracking-[0.18em] text-slate-500">Hindsight</p>
         <h1 className="text-3xl font-bold text-slate-900">Operational memory</h1>
       </div>
+      {error && <p className="rounded-lg bg-amber-50 p-4 text-amber-800">{error}</p>}
 
       <div className="grid gap-4 md:grid-cols-3">
         <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">

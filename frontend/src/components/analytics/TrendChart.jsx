@@ -1,0 +1,1 @@
+export default function TrendChart({ trend }) { return <div className="rounded-xl bg-slate-50 p-4"><p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Demand trend</p><p className="mt-2 text-xl font-bold text-slate-900">{trend?.direction || 'insufficient evidence'}</p><p className="mt-1 text-sm text-slate-600">Change: {trend?.change ?? 0}</p></div>; }

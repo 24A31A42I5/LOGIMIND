@@ -3,9 +3,10 @@ import { getShipments } from '../api/shipments';
 
 export default function ShipmentsPage() {
   const [shipments, setShipments] = useState([]);
+  const [error, setError] = useState('');
 
   useEffect(() => {
-    getShipments().then((response) => setShipments(response.data));
+    getShipments().then((response) => setShipments(response.data)).catch(() => setError('Shipment data is unavailable.'));
   }, []);
 
   return (
@@ -15,6 +16,8 @@ export default function ShipmentsPage() {
         <h1 className="text-3xl font-bold text-slate-900">Shipments</h1>
       </div>
 
+      {error && <p className="rounded-lg bg-amber-50 p-4 text-amber-800">{error}</p>}
+      {!error && !shipments.length && <p className="rounded-lg bg-slate-50 p-4 text-slate-600">No shipments are available for this workspace.</p>}
       <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm">
         <table className="min-w-full text-left text-sm text-slate-700">
           <thead className="bg-slate-50 text-xs uppercase tracking-[0.12em] text-slate-600">

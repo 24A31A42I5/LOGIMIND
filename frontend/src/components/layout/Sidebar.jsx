@@ -1,24 +1,23 @@
-import { LayoutDashboard, Users, BrainCircuit, Package, History } from 'lucide-react';
+import { LayoutDashboard, Users, BrainCircuit, Package, History, Compass, BarChart3 } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
+import { useBusiness } from '../../context/useBusiness';
 
-const links = [
-  { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { to: '/delivery-agents', label: 'Delivery Agents', icon: Users },
-  { to: '/ai-analyzer', label: 'AI Analyzer', icon: BrainCircuit },
-  { to: '/shipments', label: 'Shipments', icon: Package },
-  { to: '/memory', label: 'Memory', icon: History },
-];
+const icons = { 'Delivery Agents': Users, Shipments: Package, 'AI Analyzer': BrainCircuit, Memory: History, Expansion: Compass, Analytics: BarChart3 };
 
 export default function Sidebar() {
+  const { config } = useBusiness();
+  const links = [{ to: '/dashboard', label: 'Dashboard' }, ...config.navigation];
   return (
     <aside className="hidden min-h-screen w-64 border-r border-slate-200 bg-slate-50 p-4 lg:flex lg:flex-col">
       <div className="mb-8 px-2">
         <p className="text-xs font-semibold uppercase tracking-[0.2em] text-blue-700">LOGIMIND</p>
-        <h1 className="mt-2 text-xl font-bold text-slate-900">Distributor</h1>
+        <h1 className="mt-2 text-xl font-bold text-slate-900">{config.label}</h1>
       </div>
 
       <nav className="space-y-2">
-        {links.map(({ to, label, icon: Icon }) => (
+        {links.map(({ to, label }) => {
+          const Icon = icons[label] || LayoutDashboard;
+          return (
           <NavLink
             key={to}
             to={to}
@@ -31,7 +30,8 @@ export default function Sidebar() {
             <Icon size={18} />
             {label}
           </NavLink>
-        ))}
+          );
+        })}
       </nav>
     </aside>
   );

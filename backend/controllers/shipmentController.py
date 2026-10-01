@@ -1,3 +1,5 @@
+from fastapi import HTTPException
+
 from services.analyticsService import get_shipments
 
 
@@ -19,4 +21,4 @@ async def get_shipment_by_id(shipment_id: str):
     for shipment in shipments:
         if shipment['shipment_id'] == shipment_id:
             return shipment
-    return {'detail': 'Shipment not found'}
+        raise HTTPException(status_code=404, detail='Shipment not found')

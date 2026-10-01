@@ -1,0 +1,30 @@
+{
+    "businessType": "raw_material",
+    "synthetic": true,
+    "supplies": [
+        {
+            "order_id": "SUP-001",
+            "material": "Steel coils",
+            "customer": "Fabricator A",
+            "location": "Industrial East",
+            "volume": 84,
+            "demand": 90
+        },
+        {
+            "order_id": "SUP-002",
+            "material": "Food-grade resin",
+            "customer": "Packager B",
+            "location": "Industrial East",
+            "volume": 61,
+            "demand": 77
+        },
+        {
+            "order_id": "SUP-003",
+            "material": "Aluminium",
+            "customer": "Workshop C",
+            "location": "Industrial North",
+            "volume": 43,
+            "demand": 58
+        }
+    ]
+}

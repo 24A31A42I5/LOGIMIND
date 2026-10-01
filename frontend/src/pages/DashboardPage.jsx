@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import api from '../api/client';
 import { getOverallAnalytics } from '../api/analytics';
 import { getShipments } from '../api/shipments';
 import { getAgents } from '../api/agents';
@@ -8,12 +9,34 @@ import TodayDeliveriesTable from '../components/dashboard/TodayDeliveriesTable';
 import { Users, Truck, Clock3, AlertTriangle } from 'lucide-react';
 import ActiveAgentsModal from '../components/dashboard/ActiveAgentsModal';
 import Badge from '../components/common/Badge';
+import { useBusiness } from '../context/useBusiness';
+
+function DomainDashboard({ config }) {
+  const [records, setRecords] = useState([]);
+  const [synthetic, setSynthetic] = useState(false);
+  const [state, setState] = useState('loading');
+
+  useEffect(() => {
+    api.get(config.operationalEndpoint).then(({ data }) => {
+      setRecords(data.records || []);
+      setSynthetic(Boolean(data.synthetic));
+      setState('ready');
+    }).catch(() => setState('error'));
+  }, [config.operationalEndpoint]);
+
+  if (state === 'loading') return <div className="p-6 text-slate-600">Loading {config.label.toLowerCase()} operations...</div>;
+  if (state === 'error') return <div className="rounded-xl border border-amber-200 bg-amber-50 p-6 text-amber-800">{config.label} operational data is unavailable.</div>;
+  const values = [records.length, records.reduce((sum, record) => sum + Number(record.sales || record.volume || record.units || record.demand || 0), 0), new Set(records.map((record) => record.location)).size, records.reduce((sum, record) => sum + Number(record.demand || 0), 0)];
+  return <div className="space-y-6"><div><p className="text-xs font-semibold uppercase tracking-[0.2em] text-blue-700">{config.label} workspace</p><h1 className="mt-1 text-3xl font-bold text-slate-900">Current operations</h1><p className="mt-2 text-slate-600">Business-specific signals for demand, performance, and expansion readiness.</p></div>{synthetic && <p className="rounded-lg bg-slate-200 px-3 py-2 text-sm text-slate-700">Synthetic demo data. These values are representative, not external evidence.</p>}<div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">{config.metrics.map((metric, index) => <div key={metric} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"><p className="text-sm text-slate-500">{metric}</p><p className="mt-3 text-3xl font-bold text-slate-900">{values[index] ?? 0}</p><p className="mt-2 text-sm text-slate-600">Current operating signal</p></div>)}</div></div>;
+}
 
 export default function DashboardPage() {
+  const { profile, config } = useBusiness();
   const [overall, setOverall] = useState(null);
   const [shipments, setShipments] = useState([]);
   const [agents, setAgents] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [showAgents, setShowAgents] = useState(false);
 
   useEffect(() => {
@@ -27,6 +50,8 @@ export default function DashboardPage() {
         setOverall(overallRes.data);
         setShipments(shipmentsRes.data);
         setAgents(agentsRes.data);
+      } catch {
+        setError('Dashboard data is unavailable. Check the backend connection and try again.');
       } finally {
         setLoading(false);
       }
@@ -35,7 +60,10 @@ export default function DashboardPage() {
     load();
   }, []);
 
+  if (profile?.businessType && profile.businessType !== 'distributor') return <DomainDashboard config={config} />;
+
   if (loading) return <div className="p-6 text-slate-600">Loading dashboard...</div>;
+  if (error) return <div className="rounded-xl border border-amber-200 bg-amber-50 p-6 text-amber-800">{error}</div>;
 
   const metrics = [
     { label: 'Packages Received', value: overall?.total_deliveries ?? 0, trend: '+8.4%', icon: Truck },

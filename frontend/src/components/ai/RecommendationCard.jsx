@@ -11,8 +11,14 @@ export default function RecommendationCard({ recommendation, memoryAvailable = f
 		try {
 			const id = recommendation.id || 'rec-001';
 			await applyRecommendation(id);
-			await recordRecommendationOutcome(id, 48, 31);
-			setMessage('Applied and outcome retained.');
+			const before = Number(recommendation.before_minutes);
+			const after = Number(recommendation.after_minutes);
+			if (Number.isFinite(before) && Number.isFinite(after)) {
+				await recordRecommendationOutcome(id, before, after);
+				setMessage('Applied and measured outcome retained.');
+			} else {
+				setMessage('Applied. Record an outcome after the intervention is measured.');
+			}
 			onUpdated?.();
 		} catch {
 			setMessage('Unable to record this recommendation outcome.');
