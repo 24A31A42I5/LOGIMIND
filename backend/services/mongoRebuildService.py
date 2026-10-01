@@ -19,6 +19,10 @@ COLLECTIONS = [
     'recommendations',
     'hindsight_memories',
     'interventions',
+    'restaurant_orders',
+    'supplier_orders',
+    'retail_sales',
+    'service_bookings',
 ]
 
 
@@ -189,6 +193,19 @@ def rebuild_linked_database() -> dict[str, Any]:
     for collection_name, collection_documents in documents.items():
         database[collection_name].insert_many(collection_documents)
 
+    from domains.raw_material.service import SUPPLY_ORDERS
+    from domains.restaurant.service import RESTAURANT_ORDERS
+    from domains.retail.service import RETAIL_SALES
+    from domains.service_provider.service import SERVICE_BOOKINGS
+    domain_documents = {
+        'restaurant_orders': RESTAURANT_ORDERS,
+        'supplier_orders': SUPPLY_ORDERS,
+        'retail_sales': RETAIL_SALES,
+        'service_bookings': SERVICE_BOOKINGS,
+    }
+    for collection_name, records in domain_documents.items():
+        database[collection_name].insert_many([dict(record, userId='demo-user', businessType=collection_name.split('_')[0], synthetic=True) for record in records])
+
     indexes = {
         'areas': ['area_code'],
         'riders': ['rider_code'],
@@ -198,6 +215,10 @@ def rebuild_linked_database() -> dict[str, Any]:
         'recommendations': ['recommendation_code', 'area', 'memory'],
         'hindsight_memories': ['memory_code'],
         'interventions': ['intervention_code', 'recommendation', 'area', 'rider'],
+        'restaurant_orders': ['userId', 'location'],
+        'supplier_orders': ['userId', 'location'],
+        'retail_sales': ['userId', 'location'],
+        'service_bookings': ['userId', 'location'],
     }
     for collection_name, fields in indexes.items():
         for field in fields:

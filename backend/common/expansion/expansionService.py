@@ -26,10 +26,17 @@ def get_expansion_analysis(business_type: str, records: list[dict[str, Any]] | N
 		records = record_sources[business_type](user_id)
 	if len(records) < 2:
 		return {'businessType': business_type, 'sufficientEvidence': False, 'synthetic': True, 'candidates': [], 'historicalMemory': {'available': False, 'message': 'Insufficient current data for a reliable expansion assessment.'}}
-	candidates = [
-		{'name': 'Area C', 'latitude': 18.509, 'longitude': 73.845, 'demand': 86, 'customer_density': 82, 'coverage_gap': 88, 'operational_feasibility': 74, 'foot_traffic': 84, 'purchasing_potential': 79, 'competition': 'Medium', 'historical_evidence': 'Similar operating areas previously showed strong performance.'},
-		{'name': 'Area D', 'latitude': 18.548, 'longitude': 73.884, 'demand': 68, 'customer_density': 71, 'coverage_gap': 76, 'operational_feasibility': 62, 'foot_traffic': 65, 'purchasing_potential': 72, 'competition': 'Low', 'historical_evidence': 'Historical evidence is limited for this area.'},
-	]
+	grouped = {}
+	for record in records:
+		location = record.get('location', 'Unknown')
+		grouped.setdefault(location, []).append(record)
+	candidates = []
+	for name, items in grouped.items():
+		candidate = {'name': name, 'historical_evidence': 'Derived from current domain records.'}
+		for factor in set(FACTORS[business_type] + ['coverage_gap']):
+			values = [float(item.get(factor, 0)) for item in items]
+			candidate[factor] = round(sum(values) / len(values), 2) if values else 0
+		candidates.append(candidate)
 	factors = FACTORS[business_type]
 	historical = recall(f'{business_type} expansion demand and coverage performance')
 	historical_available = historical.get('status') not in {'fallback', 'error'} and bool(historical.get('memories') or historical.get('results') or historical.get('data'))

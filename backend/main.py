@@ -22,7 +22,7 @@ from routers.shipmentRoutes import router as shipment_router
 
 load_dotenv()
 
-app = FastAPI(title='LOGIMIND', version='1.0.0')
+app = FastAPI(title='LOGIMIND', version='2.0.0')
 
 frontend_url = os.getenv('FRONTEND_URL', 'http://localhost:5173')
 app.add_middleware(

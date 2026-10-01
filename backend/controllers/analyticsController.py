@@ -1,3 +1,4 @@
+from core.database import get_user_profile
 from services.analyticsService import (
     get_area_analytics,
     get_daily_analytics,
@@ -8,25 +9,30 @@ from services.analyticsService import (
 )
 
 
-async def get_analytics_overall():
-    return get_overall_analytics()
+def _context(user: dict) -> tuple[str, str]:
+    profile = get_user_profile(user['userId'])
+    return profile.get('businessType', 'distributor'), user['userId']
 
 
-async def get_analytics_daily():
-    return get_daily_analytics()
+async def get_analytics_overall(user: dict):
+    return get_overall_analytics(*_context(user))
 
 
-async def get_analytics_monthly():
-    return get_monthly_analytics()
+async def get_analytics_daily(user: dict):
+    return get_daily_analytics(*_context(user))
 
 
-async def get_analytics_areas():
-    return get_area_analytics()
+async def get_analytics_monthly(user: dict):
+    return get_monthly_analytics(*_context(user))
 
 
-async def get_analytics_hotspots():
-    return get_hotspots()
+async def get_analytics_areas(user: dict):
+    return get_area_analytics(*_context(user))
 
 
-async def get_analytics_trends():
-    return get_trends()
+async def get_analytics_hotspots(user: dict):
+    return get_hotspots(*_context(user))
+
+
+async def get_analytics_trends(user: dict):
+    return get_trends(*_context(user))

@@ -30,6 +30,18 @@ def save_fallback_profile(profile: dict[str, Any]) -> dict[str, Any]:
 	return profile
 
 
+def get_user_profile(user_id: str) -> dict[str, Any]:
+	collection = get_profiles_collection()
+	if collection is not None:
+		try:
+			profile = collection.find_one({'userId': user_id}, {'_id': 0})
+			if profile:
+				return profile
+		except Exception:
+			pass
+	return get_fallback_profile(user_id) or {'userId': user_id, 'businessType': 'distributor', 'businessName': 'Demo business'}
+
+
 def get_users_collection():
 	collection = get_profiles_collection()
 	return collection.database['users'] if collection is not None else None

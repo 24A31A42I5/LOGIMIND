@@ -1,30 +1,28 @@
-import { useEffect, useState } from 'react';
-import { BarChart, Bar, ResponsiveContainer, XAxis, YAxis, Tooltip, LineChart, Line, CartesianGrid, AreaChart, Area } from 'recharts';
-import { getOverallAnalytics, getDailyAnalytics, getAreaAnalytics } from '../api/analytics';
-import { getTodayInsights, investigateArea } from '../api/insights';
-import { getRecentMemory } from '../api/memory';
-import RecommendationCard from '../components/ai/RecommendationCard';
-import MemoryEvidenceModal from '../components/ai/MemoryEvidenceModal';
-import ColdVsMemoryComparison from '../components/ai/ColdVsMemoryComparison';
-import DomainWorkspacePage from './DomainWorkspacePage';
-import { useBusiness } from '../context/useBusiness';
-
-const hourData = [
-  { time: '08', deliveries: 26 },
-  { time: '10', deliveries: 40 },
-  { time: '12', deliveries: 64 },
-  { time: '14', deliveries: 72 },
-  { time: '16', deliveries: 91 },
-  { time: '18', deliveries: 120 },
-  { time: '20', deliveries: 94 },
-];
-
-const areaData = [
-  { area: 'Area A', avg: 39 },
-  { area: 'Area B', avg: 42 },
-  { area: 'Area C', avg: 47 },
-  { area: 'Area D', avg: 53 },
-];
+import { useEffect, useState } from "react";
+import {
+  BarChart,
+  Bar,
+  ResponsiveContainer,
+  XAxis,
+  YAxis,
+  Tooltip,
+  LineChart,
+  Line,
+  CartesianGrid,
+  AreaChart,
+  Area,
+} from "recharts";
+import {
+  getOverallAnalytics,
+  getDailyAnalytics,
+  getAreaAnalytics,
+} from "../api/analytics";
+import { getTodayInsights, investigateArea } from "../api/insights";
+import { getRecentMemory } from "../api/memory";
+import RecommendationCard from "../components/ai/RecommendationCard";
+import MemoryEvidenceModal from "../components/ai/MemoryEvidenceModal";
+import ColdVsMemoryComparison from "../components/ai/ColdVsMemoryComparison";
+import { useBusiness } from "../context/useBusiness";
 
 export default function AiAnalyzerPage() {
   const { profile } = useBusiness();
@@ -36,30 +34,28 @@ export default function AiAnalyzerPage() {
   const [memories, setMemories] = useState([]);
   const [showMemory, setShowMemory] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    if (profile?.businessType !== 'distributor') {
-      return;
-    }
     const load = async () => {
       try {
-        const [overallRes, dailyRes, areaRes, insightRes, memoryRes] = await Promise.all([
-          getOverallAnalytics(),
-          getDailyAnalytics(),
-          getAreaAnalytics(),
-          getTodayInsights(),
-          getRecentMemory(),
-        ]);
+        const [overallRes, dailyRes, areaRes, insightRes, memoryRes] =
+          await Promise.all([
+            getOverallAnalytics(),
+            getDailyAnalytics(),
+            getAreaAnalytics(),
+            getTodayInsights(),
+            getRecentMemory(),
+          ]);
         setOverall(overallRes.data);
         setDaily(dailyRes.data);
         setAreas(areaRes.data);
         setInsights(insightRes.data);
         setMemories(memoryRes.data);
-        const investigationRes = await investigateArea('Area C');
+        const investigationRes = await investigateArea();
         setInvestigation(investigationRes.data);
       } catch {
-        setError('AI analysis is unavailable right now.');
+        setError("AI analysis is unavailable right now.");
       } finally {
         setLoading(false);
       }
@@ -68,57 +64,97 @@ export default function AiAnalyzerPage() {
     load();
   }, [profile?.businessType]);
 
-  if (profile?.businessType !== 'distributor') return <DomainWorkspacePage />;
-  if (loading) return <div className="p-6 text-slate-600">Loading analytics...</div>;
-  if (error) return <div className="rounded-xl border border-amber-200 bg-amber-50 p-6 text-amber-800">{error}</div>;
+  if (loading)
+    return <div className="p-6 text-slate-600">Loading analytics...</div>;
+  if (error)
+    return (
+      <div className="rounded-xl border border-amber-200 bg-amber-50 p-6 text-amber-800">
+        {error}
+      </div>
+    );
 
-  const trendData = [
-    { date: 'Aug 05', value: 42 },
-    { date: 'Aug 10', value: 45 },
-    { date: 'Aug 15', value: 47 },
-    { date: 'Aug 20', value: 44 },
-    { date: 'Aug 28', value: 41 },
-  ];
-  const volumeByHour = daily?.timeline?.map((item) => ({ time: item.time, deliveries: item.deliveries })) || hourData;
-  const averageByArea = areas.length ? areas.map((item) => ({ area: item.area, avg: item.average_delivery_time })) : areaData;
+  const metrics = overall?.currentData || overall || {};
+  const locationKey =
+    profile?.businessType === "distributor" ? "area" : "location";
+  const volumeKey =
+    profile?.businessType === "distributor" ? "deliveries" : "volume";
+  const volumeByHour =
+    daily?.timeline ||
+    areas.map((item) => ({
+      time: item[locationKey],
+      [volumeKey]: item.volume || item.deliveries || item.demand || 0,
+    }));
+  const averageByArea = areas.map((item) => ({
+    area: item[locationKey] || item.area,
+    avg: item.average_delivery_time || item.demand || item.performance || 0,
+  }));
+  const trendData =
+    daily?.timeline?.map((item) => ({
+      date: item.time,
+      value: item.deliveries || item.volume || item.demand || 0,
+    })) ||
+    areas.map((item) => ({
+      date: item[locationKey] || item.area,
+      value: item.volume || item.demand || item.deliveries || 0,
+    }));
 
   return (
     <div className="space-y-6">
       <div>
-        <p className="text-sm font-medium uppercase tracking-[0.18em] text-slate-500">AI analyzer</p>
-        <h1 className="text-3xl font-bold text-slate-900">Overall analytics</h1>
+        <p className="text-sm font-medium uppercase tracking-[0.18em] text-slate-500">
+          AI analyzer
+        </p>
+        <h1 className="text-3xl font-bold text-slate-900">
+          {profile?.businessName || "Business"} intelligence
+        </h1>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-          <p className="text-sm text-slate-500">Total deliveries</p>
-          <p className="mt-2 text-3xl font-bold text-slate-900">{overall?.total_deliveries ?? 0}</p>
+          <p className="text-sm text-slate-500">Current volume</p>
+          <p className="mt-2 text-3xl font-bold text-slate-900">
+            {metrics.volume ?? 0}
+          </p>
         </div>
         <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-          <p className="text-sm text-slate-500">Average delivery time</p>
-          <p className="mt-2 text-3xl font-bold text-slate-900">{overall?.average_delivery_time ?? 0} min</p>
+          <p className="text-sm text-slate-500">Demand</p>
+          <p className="mt-2 text-3xl font-bold text-slate-900">
+            {metrics.demand ?? 0}
+          </p>
         </div>
         <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-          <p className="text-sm text-slate-500">Delay rate</p>
-          <p className="mt-2 text-3xl font-bold text-slate-900">{overall?.delay_rate ?? 0}%</p>
+          <p className="text-sm text-slate-500">Growth</p>
+          <p className="mt-2 text-3xl font-bold text-slate-900">
+            {metrics.growth ?? 0}
+          </p>
         </div>
         <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-          <p className="text-sm text-slate-500">Failed delivery rate</p>
-          <p className="mt-2 text-3xl font-bold text-slate-900">{overall?.failed_delivery_rate ?? 0}%</p>
+          <p className="text-sm text-slate-500">Performance</p>
+          <p className="mt-2 text-3xl font-bold text-slate-900">
+            {metrics.performance ?? 0}
+          </p>
         </div>
         <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-          <p className="text-sm text-slate-500">Active agents</p>
-          <p className="mt-2 text-3xl font-bold text-slate-900">{overall?.active_agents ?? 0}</p>
+          <p className="text-sm text-slate-500">Coverage</p>
+          <p className="mt-2 text-3xl font-bold text-slate-900">
+            {metrics.coverage ?? 0}
+          </p>
         </div>
         <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-          <p className="text-sm text-slate-500">Major hotspots</p>
-          <p className="mt-2 text-xl font-bold text-slate-900">{overall?.area_hotspots?.[0]?.name ?? 'Area C'}</p>
+          <p className="text-sm text-slate-500">Top location</p>
+          <p className="mt-2 text-xl font-bold text-slate-900">
+            {metrics.hotspots?.[0]?.location ||
+              metrics.area_hotspots?.[0]?.name ||
+              "No location yet"}
+          </p>
         </div>
       </div>
 
       <div className="grid gap-6 xl:grid-cols-2">
         <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-          <h3 className="mb-4 text-lg font-semibold text-slate-900">Delivery volume by hour</h3>
+          <h3 className="mb-4 text-lg font-semibold text-slate-900">
+            Demand by operating context
+          </h3>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={volumeByHour}>
@@ -126,14 +162,16 @@ export default function AiAnalyzerPage() {
                 <XAxis dataKey="time" />
                 <YAxis />
                 <Tooltip />
-                <Bar dataKey="deliveries" fill="#2563eb" radius={[8, 8, 0, 0]} />
+                <Bar dataKey={volumeKey} fill="#2563eb" radius={[8, 8, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
         </div>
 
         <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-          <h3 className="mb-4 text-lg font-semibold text-slate-900">Average delivery time by area</h3>
+          <h3 className="mb-4 text-lg font-semibold text-slate-900">
+            Location performance
+          </h3>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={averageByArea}>
@@ -148,7 +186,9 @@ export default function AiAnalyzerPage() {
         </div>
 
         <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-          <h3 className="mb-4 text-lg font-semibold text-slate-900">Delivery volume over time</h3>
+          <h3 className="mb-4 text-lg font-semibold text-slate-900">
+            Volume over time
+          </h3>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={trendData}>
@@ -169,7 +209,9 @@ export default function AiAnalyzerPage() {
         </div>
 
         <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-          <h3 className="mb-4 text-lg font-semibold text-slate-900">Average delivery time trend</h3>
+          <h3 className="mb-4 text-lg font-semibold text-slate-900">
+            Performance trend
+          </h3>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={trendData}>
@@ -177,7 +219,13 @@ export default function AiAnalyzerPage() {
                 <XAxis dataKey="date" />
                 <YAxis />
                 <Tooltip />
-                <Line type="monotone" dataKey="value" stroke="#f59e0b" strokeWidth={3} dot={{ r: 4 }} />
+                <Line
+                  type="monotone"
+                  dataKey="value"
+                  stroke="#f59e0b"
+                  strokeWidth={3}
+                  dot={{ r: 4 }}
+                />
               </LineChart>
             </ResponsiveContainer>
           </div>
@@ -189,27 +237,49 @@ export default function AiAnalyzerPage() {
         <div className="mt-3 rounded-xl bg-slate-50 p-4">
           <p className="font-medium text-slate-800">{insights?.summary}</p>
           <ul className="mt-3 list-disc space-y-2 pl-5 text-slate-600">
-            {insights?.insights?.map((item) => <li key={item}>{item}</li>)}
+            {insights?.insights?.map((item) => (
+              <li key={item}>{item}</li>
+            ))}
           </ul>
         </div>
       </div>
 
       <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-        <h3 className="text-lg font-semibold text-slate-900">AI recommendations</h3>
+        <h3 className="text-lg font-semibold text-slate-900">
+          AI recommendations
+        </h3>
         <div className="mt-4 space-y-4">
           {investigation?.recommendations?.map((recommendation) => (
-            <RecommendationCard key={recommendation.title} recommendation={recommendation} memoryAvailable={investigation.memory_available} />
+            <RecommendationCard
+              key={recommendation.title}
+              recommendation={recommendation}
+              memoryAvailable={investigation.memory_available}
+            />
           ))}
         </div>
-        <button type="button" onClick={() => setShowMemory(true)} className="mt-4 rounded-lg border border-blue-200 px-3 py-2 text-sm font-semibold text-blue-700 hover:bg-blue-50">View memory evidence</button>
+        <button
+          type="button"
+          onClick={() => setShowMemory(true)}
+          className="mt-4 rounded-lg border border-blue-200 px-3 py-2 text-sm font-semibold text-blue-700 hover:bg-blue-50"
+        >
+          View memory evidence
+        </button>
       </div>
 
       <ColdVsMemoryComparison
         currentEvidence={investigation?.summary}
-        historicalEvidence="Area C has repeatedly experienced evening delays, and a previous two-agent intervention reduced delivery time from 48 to 31 minutes."
+        historicalEvidence={
+          investigation?.historicalEvidence?.message ||
+          "No historical evidence is currently available."
+        }
         memoryAvailable={investigation?.memory_available}
       />
-      {showMemory && <MemoryEvidenceModal memories={investigation?.memory_available ? memories : []} onClose={() => setShowMemory(false)} />}
+      {showMemory && (
+        <MemoryEvidenceModal
+          memories={investigation?.memory_available ? memories : []}
+          onClose={() => setShowMemory(false)}
+        />
+      )}
     </div>
   );
 }

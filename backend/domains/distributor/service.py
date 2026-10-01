@@ -7,7 +7,7 @@ from services.seedService import get_demo_store
 
 def list_operations(user_id: str | None = None) -> list[dict[str, Any]]:
 	seed_records = [
-		{'shipment_id': item['shipment_id'], 'customer': item['customer'], 'location': item['area'], 'volume': 1, 'demand': 1, 'customer_density': 330 if item['area'] == 'Area C' else 220, 'performance': max(0, 100 - item['delay_minutes']), 'coverage': 70 if item['area'] == 'Area C' else 90}
+		{'shipment_id': item['shipment_id'], 'customer': item['customer'], 'location': item['area'], 'area': item['area'], 'volume': 1, 'demand': 1, 'customer_density': 330 if item['area'] == 'Area C' else 220, 'performance': max(0, 100 - item['delay_minutes']), 'coverage': 70 if item['area'] == 'Area C' else 90, 'duration_minutes': item['duration_minutes'], 'delay_minutes': item['delay_minutes'], 'status': item['status'], 'dispatch_time': item['dispatch_time'], 'timestamp': item['timestamp']}
 		for item in get_demo_store()['shipments'][:60]
 	]
 	return read_domain_records('distributor_shipments', seed_records, user_id)

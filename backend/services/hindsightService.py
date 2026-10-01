@@ -33,13 +33,13 @@ class HindsightService:
         except Exception:
             return {'status': 'fallback', 'message': 'Historical memory currently unavailable.'}
 
-    def recall_memory(self, query: str) -> dict[str, Any]:
+    def recall_memory(self, query: str | dict[str, Any]) -> dict[str, Any]:
         if not is_hindsight_configured():
             return {'status': 'fallback', 'message': 'Historical memory currently unavailable.'}
         try:
             response = httpx.post(
                 self._bank_url('memories/recall'),
-                json={'query': query},
+                json={'query': json.dumps(query) if isinstance(query, dict) else query},
                 headers={'Authorization': f'Bearer {self.api_key}', 'Content-Type': 'application/json'},
                 timeout=10,
             )

@@ -7,7 +7,7 @@ def retain(experience: dict[str, Any]) -> dict[str, Any]:
 	return hindsight_service.retain_memory(experience)
 
 
-def recall(query: str) -> dict[str, Any]:
+def recall(query: str | dict[str, Any]) -> dict[str, Any]:
 	return hindsight_service.recall_memory(query)
 
 
