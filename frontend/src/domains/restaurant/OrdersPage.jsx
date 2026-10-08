@@ -6,6 +6,7 @@ export default function OrdersPage() {
       title="Orders"
       description="Track ordering patterns, peak periods, and delivery demand."
       endpoint="/restaurant/orders"
+      importDataset="orders"
       columns={[
         { key: "order_id", label: "Order" },
         { key: "product", label: "Product" },

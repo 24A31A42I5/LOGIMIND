@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link } from "react-router-dom";
 
 export default function WelcomePage() {
   return (
@@ -9,24 +9,25 @@ export default function WelcomePage() {
             LOGIMIND
           </p>
           <h1 className="text-4xl font-bold tracking-tight text-slate-900 md:text-6xl">
-            AI-Powered Distributor Operations Intelligence
+            AI-Powered Multi-Domain Business Operations Intelligence
           </h1>
           <p className="mt-6 max-w-2xl text-lg text-slate-600">
-            LOGIMIND helps distributors understand today&apos;s delivery operations, find hotspots,
-            analyze performance, and learn from historical experience so the next recommendation is wiser.
+            LOGIMIND helps distributors, raw material suppliers, retailers, and
+            restaurants understand operations, find evidence-based hotspots, and
+            learn from historical experience.
           </p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
             <Link
-              to="/login"
+              to="/signup"
               className="inline-flex items-center justify-center rounded-lg bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-500"
             >
-              Get Started
+              Sign up
             </Link>
             <Link
               to="/login"
               className="inline-flex items-center justify-center rounded-lg border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-100"
             >
-              Login
+              Sign in
             </Link>
           </div>
         </div>

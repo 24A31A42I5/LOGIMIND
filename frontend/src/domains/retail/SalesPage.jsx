@@ -6,6 +6,7 @@ export default function SalesPage() {
       title="Sales"
       description="Track product movement, purchasing potential, and customer demand."
       endpoint="/retail/sales"
+      importDataset="sales"
       columns={[
         { key: "sale_id", label: "Sale" },
         { key: "product", label: "Product" },

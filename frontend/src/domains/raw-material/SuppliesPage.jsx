@@ -6,6 +6,7 @@ export default function SuppliesPage() {
       title="Supplies"
       description="Monitor material movement, B2B demand, and supply coverage."
       endpoint="/raw-material/supplies"
+      importDataset="supplies"
       columns={[
         { key: "order_id", label: "Order" },
         { key: "material", label: "Material" },

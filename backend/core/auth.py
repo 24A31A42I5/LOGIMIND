@@ -53,14 +53,24 @@ def authenticate(email: str, password: str) -> dict[str, str] | None:
 	collection = get_users_collection()
 	user = collection.find_one({'userId': user_id}, {'_id': 0}) if collection is not None else get_fallback_user(user_id)
 	if user is None:
-		user = _user_document(email, password)
-		if collection is not None:
-			collection.insert_one(user)
-		else:
-			save_fallback_user(user)
+		return None
 	elif not _check_password(password, user.get('passwordHash', '')):
 		return None
 	return {'userId': user['userId'], 'email': user['email'], 'access_token': _token(user['userId']), 'token_type': 'bearer'}
+
+
+def register(email: str, password: str) -> dict[str, str] | None:
+	user_id = normalize_user_id(email)
+	collection = get_users_collection()
+	if collection is not None:
+		if collection.find_one({'userId': user_id}, {'_id': 1}):
+			return None
+		collection.insert_one(_user_document(email, password))
+	else:
+		if get_fallback_user(user_id) is not None:
+			return None
+		save_fallback_user(_user_document(email, password))
+	return authenticate(email, password)
 
 
 def build_user(email: str) -> dict[str, str]:

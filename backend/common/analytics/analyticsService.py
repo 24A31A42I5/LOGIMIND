@@ -1,5 +1,5 @@
 from collections import defaultdict
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Any, Iterable
 
 
@@ -20,12 +20,20 @@ def analyze_records(business_type: str, records: Iterable[dict[str, Any]]) -> di
 	locations = group_by_location(records)
 	for location in locations:
 		location['coverage_gap'] = round(100 - location.get('coverage', 0), 2)
+		coordinates = _location_coordinates(records, location['location'])
+		location['coordinates'] = coordinates
+		if coordinates:
+			location['lat'] = coordinates['latitude']
+			location['lng'] = coordinates['longitude']
 	peak_periods = [record.get('order_period') or record.get('peak_period') for record in records]
-	peak_period = max(set(peak_periods), key=peak_periods.count) if any(peak_periods) else 'observed operating hours'
+	peak_period = max(set(filter(None, peak_periods)), key=peak_periods.count) if any(peak_periods) else 'observed operating hours'
+	hotspots = sorted(locations, key=lambda item: (item.get('demand', 0), item.get('volume', 0)), reverse=True)
+	lowspots = sorted(locations, key=lambda item: (item.get('demand', 0), item.get('volume', 0)))
 	base.update({
 		'businessType': business_type,
 		'volume': len(records) if not base['volume'] else base['volume'],
-		'hotspots': sorted(locations, key=lambda item: (item.get('demand', 0), item.get('coverage_gap', 0)), reverse=True),
+		'hotspots': hotspots,
+		'lowspots': lowspots,
 		'peak_period': peak_period,
 		'growth': round(sum(record.get('demand', 0) for record in records) / len(records), 2) if records else 0,
 	})
@@ -44,3 +52,38 @@ def group_by_location(records: Iterable[dict[str, Any]]) -> list[dict[str, Any]]
 	for record in records:
 		groups[record.get('location', 'Unknown')].append(record)
 	return [{'location': location, **normalize_metrics(items)} for location, items in groups.items()]
+
+
+def _location_coordinates(records: list[dict[str, Any]], location: str) -> dict[str, float] | None:
+	points = [
+		(record.get('latitude', record.get('lat')), record.get('longitude', record.get('lng')))
+		for record in records
+		if record.get('location', 'Unknown') == location
+	]
+	valid = [(float(latitude), float(longitude)) for latitude, longitude in points if latitude is not None and longitude is not None]
+	if not valid:
+		return None
+	return {
+		'latitude': round(sum(point[0] for point in valid) / len(valid), 6),
+		'longitude': round(sum(point[1] for point in valid) / len(valid), 6),
+	}
+
+
+def filter_records_by_period(records: Iterable[dict[str, Any]], period: str = 'overall', now: datetime | None = None) -> list[dict[str, Any]]:
+	if period == 'overall':
+		return list(records)
+	now = now or datetime.now()
+	days = {'today': 1, 'week': 7, 'month': 30}.get(period)
+	if days is None:
+		return list(records)
+	start = now - timedelta(days=days - 1)
+	filtered = []
+	for record in records:
+		value = record.get('timestamp') or record.get('date') or record.get('dispatch_time') or record.get('purchase_date')
+		try:
+			date_value = datetime.fromisoformat(str(value).replace('Z', '+00:00')).replace(tzinfo=None)
+		except (TypeError, ValueError):
+			continue
+		if date_value >= start:
+			filtered.append(record)
+	return filtered

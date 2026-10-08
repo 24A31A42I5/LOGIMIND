@@ -1,7 +1,7 @@
 from typing import Any
 
 from common.analytics.analyticsService import group_by_location, normalize_metrics
-from common.repository import domain_records_are_persisted, read_domain_records
+from common.repository import domain_records_are_persisted, expand_demo_records, read_domain_records
 
 
 RETAIL_SALES = [
@@ -12,7 +12,7 @@ RETAIL_SALES = [
 
 
 def list_sales(user_id: str | None = None) -> list[dict[str, Any]]:
-	return read_domain_records('retail_sales', RETAIL_SALES, user_id)
+	return read_domain_records('retail_sales', expand_demo_records(RETAIL_SALES), user_id)
 
 
 def get_metrics(user_id: str | None = None) -> dict[str, Any]:

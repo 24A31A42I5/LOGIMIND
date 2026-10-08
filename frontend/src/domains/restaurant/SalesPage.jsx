@@ -6,6 +6,7 @@ export default function SalesPage() {
       title="Sales"
       description="Understand the products and areas creating restaurant demand."
       endpoint="/restaurant/orders"
+      importDataset="orders"
       columns={[
         { key: "product", label: "Product" },
         { key: "location", label: "Area" },

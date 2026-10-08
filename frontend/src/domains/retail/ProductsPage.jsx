@@ -6,6 +6,7 @@ export default function ProductsPage() {
       title="Products"
       description="Compare product movement and demand signals."
       endpoint="/retail/sales"
+      importDataset="sales"
       columns={[
         { key: "product", label: "Product" },
         { key: "location", label: "Area" },

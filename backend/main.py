@@ -5,6 +5,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from routers.analyticsRoutes import router as analytics_router
+from routers.analysisRoutes import router as analysis_router
+from routers.importRoutes import router as import_router
 from routers.deliveryAgentRoutes import router as delivery_agent_router
 from routers.demoRoutes import router as demo_router
 from routers.insightRoutes import router as insight_router
@@ -37,6 +39,8 @@ app.include_router(shipment_router, prefix='/api')
 app.include_router(delivery_agent_router, prefix='/api')
 app.include_router(demo_router, prefix='/api')
 app.include_router(analytics_router, prefix='/api')
+app.include_router(analysis_router, prefix='/api')
+app.include_router(import_router, prefix='/api')
 app.include_router(insight_router, prefix='/api')
 app.include_router(memory_router, prefix='/api')
 app.include_router(recommendation_router, prefix='/api')

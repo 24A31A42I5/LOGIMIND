@@ -1,26 +1,32 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { login } from '../api/auth';
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { login, signup } from "../api/auth";
 
-export default function LoginPage({ onLogin = null }) {
-  const [email, setEmail] = useState('owner@logimind.ai');
-  const [password, setPassword] = useState('demo1234');
-  const [error, setError] = useState('');
+export default function LoginPage({ onLogin = null, signupMode = false }) {
+  const [email, setEmail] = useState("owner@logimind.ai");
+  const [password, setPassword] = useState("demo1234");
+  const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const navigate = useNavigate();
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    setError('');
+    setError("");
     setSubmitting(true);
     try {
-      const response = await login(email.trim(), password);
-      localStorage.setItem('logimind-user', JSON.stringify(response.data));
-      localStorage.removeItem('logimind-profile');
+      const response = await (signupMode ? signup : login)(
+        email.trim(),
+        password,
+      );
+      localStorage.setItem("logimind-user", JSON.stringify(response.data));
+      localStorage.removeItem("logimind-profile");
       if (onLogin) onLogin(response.data);
-      navigate('/profile-setup');
+      navigate(signupMode ? "/profile-setup" : "/dashboard");
     } catch (requestError) {
-      setError(requestError.response?.data?.detail || 'Login service unavailable. Start the backend and try again.');
+      setError(
+        requestError.response?.data?.detail ||
+          "Login service unavailable. Start the backend and try again.",
+      );
     } finally {
       setSubmitting(false);
     }
@@ -30,13 +36,19 @@ export default function LoginPage({ onLogin = null }) {
     <div className="flex min-h-screen items-center justify-center bg-slate-100 px-4 py-12">
       <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
         <div className="mb-6">
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-blue-700">LOGIMIND workspace</p>
-          <h1 className="mt-2 text-3xl font-bold text-slate-900">Welcome back</h1>
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-blue-700">
+            LOGIMIND workspace
+          </p>
+          <h1 className="mt-2 text-3xl font-bold text-slate-900">
+            {signupMode ? "Create your workspace" : "Welcome back"}
+          </h1>
         </div>
 
         <form className="space-y-5" onSubmit={handleSubmit}>
           <div>
-            <label className="mb-2 block text-sm font-medium text-slate-700">Email</label>
+            <label className="mb-2 block text-sm font-medium text-slate-700">
+              Email
+            </label>
             <input
               type="email"
               value={email}
@@ -48,7 +60,9 @@ export default function LoginPage({ onLogin = null }) {
           </div>
 
           <div>
-            <label className="mb-2 block text-sm font-medium text-slate-700">Password</label>
+            <label className="mb-2 block text-sm font-medium text-slate-700">
+              Password
+            </label>
             <input
               type="password"
               value={password}
@@ -59,13 +73,17 @@ export default function LoginPage({ onLogin = null }) {
             />
           </div>
 
-          {error && <p className="rounded-lg bg-amber-50 p-3 text-sm text-amber-800">{error}</p>}
+          {error && (
+            <p className="rounded-lg bg-amber-50 p-3 text-sm text-amber-800">
+              {error}
+            </p>
+          )}
           <button
             type="submit"
             disabled={submitting}
             className="w-full rounded-lg bg-blue-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-blue-500"
           >
-            {submitting ? 'Connecting...' : 'Login'}
+            {submitting ? "Connecting..." : signupMode ? "Sign up" : "Sign in"}
           </button>
         </form>
       </div>

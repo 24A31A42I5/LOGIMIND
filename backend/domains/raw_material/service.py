@@ -1,7 +1,7 @@
 from typing import Any
 
 from common.analytics.analyticsService import group_by_location, normalize_metrics
-from common.repository import domain_records_are_persisted, read_domain_records
+from common.repository import domain_records_are_persisted, expand_demo_records, read_domain_records
 
 
 SUPPLY_ORDERS = [
@@ -12,7 +12,7 @@ SUPPLY_ORDERS = [
 
 
 def list_supplies(user_id: str | None = None) -> list[dict[str, Any]]:
-	return read_domain_records('supplier_orders', SUPPLY_ORDERS, user_id)
+	return read_domain_records('supplier_orders', expand_demo_records(SUPPLY_ORDERS), user_id)
 
 
 def get_metrics(user_id: str | None = None) -> dict[str, Any]:

@@ -16,6 +16,8 @@ import {
   getOverallAnalytics,
   getDailyAnalytics,
   getAreaAnalytics,
+  runAnalysis,
+  applyAnalysis,
 } from "../api/analytics";
 import { getTodayInsights, investigateArea } from "../api/insights";
 import { getRecentMemory } from "../api/memory";
@@ -35,6 +37,11 @@ export default function AiAnalyzerPage() {
   const [showMemory, setShowMemory] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [period, setPeriod] = useState("overall");
+  const [analysis, setAnalysis] = useState(null);
+  const [running, setRunning] = useState(false);
+  const [applying, setApplying] = useState(false);
+  const [message, setMessage] = useState("");
 
   useEffect(() => {
     const load = async () => {
@@ -74,6 +81,34 @@ export default function AiAnalyzerPage() {
     );
 
   const metrics = overall?.currentData || overall || {};
+  const executeAnalysis = async () => {
+    setRunning(true);
+    setMessage("");
+    try {
+      const response = await runAnalysis(period);
+      setAnalysis(response.data);
+      setMessage("New analysis generated. Review it before updating the map.");
+    } catch {
+      setMessage(
+        "Analysis could not be generated. Current analytics remain available.",
+      );
+    } finally {
+      setRunning(false);
+    }
+  };
+  const updateMap = async () => {
+    if (!analysis?.analysis_id) return;
+    setApplying(true);
+    try {
+      const response = await applyAnalysis(analysis.analysis_id);
+      setAnalysis(response.data);
+      setMessage("Analysis applied and retained as an operational experience.");
+    } catch {
+      setMessage("The analysis could not be applied.");
+    } finally {
+      setApplying(false);
+    }
+  };
   const locationKey =
     profile?.businessType === "distributor" ? "area" : "location";
   const volumeKey =
@@ -108,6 +143,91 @@ export default function AiAnalyzerPage() {
           {profile?.businessName || "Business"} intelligence
         </h1>
       </div>
+
+      <div className="flex flex-col gap-3 rounded-2xl border border-blue-200 bg-blue-50 p-4 md:flex-row md:items-center md:justify-between">
+        <div>
+          <p className="font-semibold text-slate-900">
+            Fresh operational analysis
+          </p>
+          <p className="text-sm text-slate-600">
+            Uses current records, historical records, and available Hindsight
+            evidence.
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <select
+            value={period}
+            onChange={(event) => setPeriod(event.target.value)}
+            className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
+          >
+            <option value="today">Today</option>
+            <option value="week">Week</option>
+            <option value="month">Month</option>
+            <option value="overall">Overall</option>
+          </select>
+          <button
+            type="button"
+            onClick={executeAnalysis}
+            disabled={running}
+            className="rounded-lg bg-blue-700 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+          >
+            {running ? "Analyzing..." : "Run AI Analysis"}
+          </button>
+        </div>
+      </div>
+      {message && (
+        <p className="rounded-lg bg-slate-100 px-3 py-2 text-sm text-slate-700">
+          {message}
+        </p>
+      )}
+
+      {analysis && (
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h2 className="text-lg font-semibold text-slate-900">
+              New analysis result
+            </h2>
+            <button
+              type="button"
+              onClick={updateMap}
+              disabled={analysis.applied || applying}
+              className="rounded-lg bg-emerald-700 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+            >
+              {analysis.applied
+                ? "Map Updated"
+                : applying
+                  ? "Updating..."
+                  : "Update Map"}
+            </button>
+          </div>
+          <div className="mt-4 grid gap-4 md:grid-cols-2">
+            <div>
+              <p className="text-sm font-semibold text-emerald-700">
+                New AI Hotspots
+              </p>
+              <ul className="mt-2 list-disc pl-5 text-sm text-slate-600">
+                {analysis.hotspots?.map((item) => (
+                  <li key={item.location}>
+                    {item.location}: demand {item.demand ?? 0}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-amber-700">
+                New AI Lowspots
+              </p>
+              <ul className="mt-2 list-disc pl-5 text-sm text-slate-600">
+                {analysis.lowspots?.map((item) => (
+                  <li key={item.location}>
+                    {item.location}: demand {item.demand ?? 0}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">

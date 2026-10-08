@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, EmailStr, Field
 
-from core.auth import authenticate
+from core.auth import authenticate, register
 
 
 router = APIRouter(prefix='/auth', tags=['auth'])
@@ -17,4 +17,12 @@ async def login(payload: AuthRequest):
 	user = authenticate(str(payload.email), payload.password)
 	if user is None:
 		raise HTTPException(status_code=401, detail='Invalid email or password')
+	return user
+
+
+@router.post('/signup')
+async def signup(payload: AuthRequest):
+	user = register(str(payload.email), payload.password)
+	if user is None:
+		raise HTTPException(status_code=409, detail='An account with this email already exists')
 	return user

@@ -7,7 +7,7 @@ from services.seedService import get_demo_store
 
 def list_operations(user_id: str | None = None) -> list[dict[str, Any]]:
 	seed_records = [
-		{'shipment_id': item['shipment_id'], 'customer': item['customer'], 'location': item['area'], 'area': item['area'], 'volume': 1, 'demand': 1, 'customer_density': 330 if item['area'] == 'Area C' else 220, 'performance': max(0, 100 - item['delay_minutes']), 'coverage': 70 if item['area'] == 'Area C' else 90, 'duration_minutes': item['duration_minutes'], 'delay_minutes': item['delay_minutes'], 'status': item['status'], 'dispatch_time': item['dispatch_time'], 'timestamp': item['timestamp']}
+		{'shipment_id': item['shipment_id'], 'customer': item['customer'], 'location': item['area'], 'area': item['area'], 'volume': 1, 'demand': 1, 'customer_density': 330 if item['area'] == 'Area C' else 220, 'performance': max(0, 100 - item['delay_minutes']), 'coverage': 70 if item['area'] == 'Area C' else 90, 'duration_minutes': item['duration_minutes'], 'delay_minutes': item['delay_minutes'], 'status': item['status'], 'dispatch_time': item['dispatch_time'], 'timestamp': item['timestamp'], 'customer_lat': item.get('customer_lat'), 'customer_lng': item.get('customer_lng'), 'latitude': item.get('customer_lat'), 'longitude': item.get('customer_lng')}
 		for item in get_demo_store()['shipments'][:60]
 	]
 	return read_domain_records('distributor_shipments', seed_records, user_id)
