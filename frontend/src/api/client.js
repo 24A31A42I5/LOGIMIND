@@ -1,7 +1,8 @@
 import axios from "axios";
 
+// Vercel serves the FastAPI backend under the same domain at /api.
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api",
+  baseURL: import.meta.env.VITE_API_BASE_URL || "/api",
   timeout: 20000,
 });
 api.interceptors.request.use((config) => {
