@@ -32,6 +32,8 @@ def analyze_records(business_type: str, records: Iterable[dict[str, Any]]) -> di
 	records = list(records)
 	base = normalize_metrics(records)
 	base['domain_metrics'] = _domain_metrics(business_type, records)
+	base['data_source'] = 'mongodb' if records else 'no_data'
+	base['synthetic'] = False
 	if not records:
 		base['pattern'] = 'No operational records are available.'
 		base['insight'] = 'Import operational records before requesting analysis.'
@@ -58,6 +60,8 @@ def analyze_records(business_type: str, records: Iterable[dict[str, Any]]) -> di
 		'lowspots': lowspots,
 		'peak_period': peak_period,
 		'growth': round(sum(record.get('demand', 0) for record in records) / len(records), 2) if records else 0,
+		'data_source': 'mongodb',
+		'synthetic': False,
 	})
 	base['pattern'] = f"Demand is concentrated in {base['hotspots'][0]['location']}" if base['hotspots'] else 'Insufficient evidence for a recurring pattern.'
 	base['insight'] = f"{base['pattern']} during {peak_period}." if base['hotspots'] else 'More operating data is needed.'

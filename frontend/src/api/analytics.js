@@ -1,6 +1,7 @@
 import api from "./client";
 
-export const getOverallAnalytics = () => api.get("/analytics/overall");
+export const getOverallAnalytics = (params = {}) =>
+  api.get("/analytics/overall", { params });
 export const getDailyAnalytics = () => api.get("/analytics/daily");
 export const getMonthlyAnalytics = () => api.get("/analytics/monthly");
 export const getAreaAnalytics = () => api.get("/analytics/areas");

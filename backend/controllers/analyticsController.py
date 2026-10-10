@@ -1,3 +1,4 @@
+from fastapi import Query
 from core.database import get_user_profile
 from services.analyticsService import (
     get_area_analytics,
@@ -14,8 +15,8 @@ def _context(user: dict) -> tuple[str, str]:
     return profile.get('businessType', 'distributor'), user['userId']
 
 
-async def get_analytics_overall(user: dict):
-    return get_overall_analytics(*_context(user))
+async def get_analytics_overall(user: dict, period: str = Query(default='overall', pattern='^(today|week|month|overall)$')):
+    return get_overall_analytics(*_context(user), period)
 
 
 async def get_analytics_daily(user: dict):

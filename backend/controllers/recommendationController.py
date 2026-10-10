@@ -20,17 +20,120 @@ def apply_recommendation(recommendation_id: str, user: dict) -> dict:
         'userId': user['userId'],
         'businessType': profile.get('businessType', 'distributor'),
         'action': recommendation_id,
-        'status': 'applied',
+        'status': 'approved',
         'timestamp': datetime.now(timezone.utc).isoformat(),
     }
     database = get_database()
     if database is None:
         raise OperationalDataUnavailable('MongoDB is unavailable; operational actions are disabled')
+    recommendation = database['recommendations'].find_one({
+        'recommendation_id': recommendation_id,
+        'userId': user['userId'],
+        'status': 'proposed',
+    })
+    if recommendation is None:
+        raise ValueError('This recommendation is unavailable, already approved, or belongs to another tenant')
+    database['recommendations'].update_one(
+        {'_id': recommendation['_id']},
+        {'$set': {'status': 'approved', 'approved_at': intervention['timestamp']}},
+    )
     database['interventions'].insert_one(intervention.copy())
     return intervention
 
 
-def record_recommendation_outcome(recommendation_id: str, metrics_before: dict[str, Any], metrics_after: dict[str, Any], notes: str, user: dict) -> dict:
+def execute_recommendation(
+    recommendation_id: str,
+    shipment_id: str,
+    agent_id: str,
+    user: dict,
+) -> dict:
+    profile = get_user_profile(user['userId'])
+    if profile.get('businessType', 'distributor') != 'distributor':
+        raise ValueError('This operational action is currently supported for distributor shipments only')
+
+    database = get_database()
+    if database is None:
+        raise OperationalDataUnavailable('MongoDB is unavailable; operational actions are disabled')
+
+    intervention = database['interventions'].find_one({
+        'recommendation_id': recommendation_id,
+        'userId': user['userId'],
+        'status': 'approved',
+    })
+    if intervention is None:
+        raise ValueError('Approve this recommendation before executing the operational action')
+
+    shipment = database['distributor_shipments'].find_one({
+        'userId': user['userId'],
+        'shipment_id': shipment_id,
+    })
+    if shipment is None:
+        raise ValueError('The shipment was not found in this tenant')
+
+    agent = database['delivery_agents'].find_one({
+        'userId': user['userId'],
+        'agent_id': agent_id,
+    })
+    if agent is None:
+        raise ValueError('The delivery agent was not found in this tenant')
+
+    executed_at = datetime.now(timezone.utc).isoformat()
+    previous_state = {
+        'agent_id': shipment.get('agent_id'),
+        'status': shipment.get('status'),
+    }
+    next_state = {
+        'agent_id': agent_id,
+        'status': 'Assigned',
+        'assigned_at': executed_at,
+    }
+    updated = database['distributor_shipments'].update_one(
+        {'_id': shipment['_id'], 'userId': user['userId']},
+        {'$set': next_state},
+    )
+    if updated.matched_count != 1:
+        raise ValueError('The shipment changed before the action could be executed')
+
+    execution = {
+        'shipment_id': shipment_id,
+        'agent_id': agent_id,
+        'previous_state': previous_state,
+        'next_state': next_state,
+        'executed_at': executed_at,
+        'actor_user_id': user['userId'],
+    }
+    database['interventions'].update_one(
+        {'_id': intervention['_id']},
+        {'$set': {
+            'status': 'executed',
+            'executed_at': executed_at,
+            'execution': execution,
+        }},
+    )
+    database['recommendations'].update_one(
+        {
+            'recommendation_id': recommendation_id,
+            'userId': user['userId'],
+            'status': 'approved',
+        },
+        {'$set': {'status': 'executed', 'executed_at': executed_at}},
+    )
+    return {
+        'recommendation_id': recommendation_id,
+        'intervention_id': intervention['intervention_id'],
+        'status': 'executed',
+        'execution': execution,
+    }
+
+
+def record_recommendation_outcome(
+    recommendation_id: str,
+    metrics_before: dict[str, Any],
+    metrics_after: dict[str, Any],
+    notes: str,
+    user: dict,
+    observation_ids: list[str],
+) -> dict:
     profile = get_user_profile(user['userId'])
     database = get_database()
     if database is None:
@@ -38,10 +141,30 @@ def record_recommendation_outcome(recommendation_id: str, metrics_before: dict[s
     intervention = database['interventions'].find_one({
         'recommendation_id': recommendation_id,
         'userId': user['userId'],
-        'status': 'applied',
+        'status': 'executed',
     })
     if intervention is None:
-        raise ValueError('Record the approved operational action before recording its outcome')
+        raise ValueError('Execute the approved operational action before recording its outcome')
+    collection_name = {
+        'distributor': 'distributor_shipments',
+        'restaurant': 'restaurant_orders',
+        'retail': 'retail_sales',
+        'raw_material': 'supplier_orders',
+        'service_provider': 'service_bookings',
+    }.get(profile.get('businessType', 'distributor'))
+    observed = database[collection_name].count_documents({
+        'userId': user['userId'],
+        '$or': [
+            {'id': {'$in': observation_ids}},
+            {'record_id': {'$in': observation_ids}},
+            {'order_id': {'$in': observation_ids}},
+            {'shipment_id': {'$in': observation_ids}},
+            {'sale_id': {'$in': observation_ids}},
+            {'booking_id': {'$in': observation_ids}},
+        ],
+    })
+    if observed < len(set(observation_ids)):
+        raise ValueError('Outcome evidence must reference observed operational records belonging to this tenant')
     comparable = set(metrics_before) & set(metrics_after)
     if not comparable or any(not isinstance(metrics_before[key], (int, float)) or not isinstance(metrics_after[key], (int, float)) for key in comparable):
         raise ValueError('Provide at least one comparable numeric metric before and after the action')

@@ -8,7 +8,7 @@ router = APIRouter(prefix='/insights', tags=['insights'])
 
 
 class InvestigationRequest(BaseModel):
-    area: str = 'Area C'
+    area: str | None = None
 
 
 @router.get('/today')

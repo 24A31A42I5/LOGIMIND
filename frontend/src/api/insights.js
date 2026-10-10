@@ -5,12 +5,19 @@ export const investigateArea = (area) =>
   api.post("/insights/investigate", { area });
 export const applyRecommendation = (recommendationId) =>
   api.post(`/recommendations/${recommendationId}/apply`);
+export const executeRecommendation = (recommendationId, shipmentId, agentId) =>
+  api.post(`/recommendations/${recommendationId}/execute`, {
+    shipment_id: shipmentId,
+    agent_id: agentId,
+  });
 export const recordRecommendationOutcome = (
   recommendationId,
   beforeMinutes,
   afterMinutes,
+  observationIds = [],
 ) =>
   api.post(`/recommendations/${recommendationId}/outcome`, {
     before_minutes: beforeMinutes,
     after_minutes: afterMinutes,
+    observation_ids: observationIds,
   });

@@ -46,19 +46,22 @@ export default function AiAnalyzerPage() {
   useEffect(() => {
     const load = async () => {
       try {
-        const [overallRes, dailyRes, areaRes, insightRes, memoryRes] =
-          await Promise.all([
-            getOverallAnalytics(),
-            getDailyAnalytics(),
-            getAreaAnalytics(),
-            getTodayInsights(),
-            getRecentMemory(),
-          ]);
+        const [overallRes, dailyRes, areaRes, insightRes] = await Promise.all([
+          getOverallAnalytics(),
+          getDailyAnalytics(),
+          getAreaAnalytics(),
+          getTodayInsights(),
+        ]);
         setOverall(overallRes.data);
         setDaily(dailyRes.data);
         setAreas(areaRes.data);
         setInsights(insightRes.data);
-        setMemories(memoryRes.data);
+        try {
+          const memoryRes = await getRecentMemory();
+          setMemories(memoryRes.data);
+        } catch {
+          setMemories([]);
+        }
         const investigationRes = await investigateArea();
         setInvestigation(investigationRes.data);
       } catch {

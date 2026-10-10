@@ -2,9 +2,13 @@ from __future__ import annotations
 
 from __future__ import annotations
 
+import hashlib
+import json
 from typing import Any, Callable
+from uuid import uuid4
 
 from common.analytics.analyticsService import analyze_records
+from config.database import get_database
 from services.hindsightService import hindsight_service
 from services.llmService import llm_service
 
@@ -173,6 +177,9 @@ def generate_intelligence(business_type: str, user_id: str, business_name: str =
             'synthetic': False,
         }
     metrics = analyze_records(business_type, records)
+    evidence_hash = hashlib.sha256(
+        json.dumps(records, sort_keys=True, default=str).encode('utf-8')
+    ).hexdigest()
     pattern = _pattern_for_business(business_type, records, metrics)
     context = {
         'userId': user_id,
@@ -203,6 +210,28 @@ def generate_intelligence(business_type: str, user_id: str, business_name: str =
     current_evidence = metrics.get('evidence', [])
     if recommendation:
         recommendation['data_source'] = pattern.get('data_source') or _data_source(records)
+        database = get_database()
+        if database is None:
+            recommendation = None
+        else:
+            existing = database['recommendations'].find_one({
+                'userId': user_id,
+                'businessType': business_type,
+                'evidence_hash': evidence_hash,
+                'status': 'proposed',
+            })
+            if existing:
+                recommendation = existing['recommendation']
+            else:
+                recommendation['id'] = str(uuid4())
+                database['recommendations'].insert_one({
+                    'recommendation_id': recommendation['id'],
+                    'userId': user_id,
+                    'businessType': business_type,
+                    'evidence_hash': evidence_hash,
+                    'recommendation': recommendation,
+                    'status': 'proposed',
+                })
     return {
         'businessType': business_type,
         'businessName': business_name,

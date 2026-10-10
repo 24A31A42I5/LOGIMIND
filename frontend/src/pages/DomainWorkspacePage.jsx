@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import api from "../api/client";
+import { getOverallAnalytics } from "../api/analytics";
 import { useBusiness } from "../context/useBusiness";
 
 const content = {
@@ -56,38 +57,69 @@ const content = {
   ],
 };
 
+const domainMetricDefinitions = {
+  distributor: [
+    ["Deliveries observed", "total_deliveries"],
+    ["Delay rate", "delay_rate"],
+    ["Average delivery duration", "average_delivery_time"],
+  ],
+  restaurant: [
+    ["Orders observed", "orders"],
+    ["Revenue observed", "revenue"],
+    ["Average preparation time", "average_preparation_minutes"],
+  ],
+  retail: [
+    ["Transactions observed", "transactions"],
+    ["Revenue observed", "revenue"],
+    ["Units sold", "units_sold"],
+  ],
+  raw_material: [
+    ["Open purchase orders", "open_orders"],
+    ["Available stock", "available_stock"],
+    ["Average lead time", "average_lead_time_days"],
+  ],
+  service_provider: [
+    ["Open work orders", "open_work_orders"],
+    ["Completed work orders", "completed_work_orders"],
+    ["SLA compliance", "sla_compliance_rate"],
+  ],
+};
+
+function formatMetric(value, key) {
+  if (value === null || value === undefined) return "—";
+  if (key.includes("rate")) return `${value}%`;
+  if (key.includes("revenue")) return `₹${Number(value).toLocaleString()}`;
+  if (key.includes("time") || key.includes("lead")) return `${value} ${key.includes("lead") ? "days" : "min"}`;
+  return Number(value).toLocaleString();
+}
+
 export default function DomainWorkspacePage() {
   const { pathname } = useLocation();
   const { config } = useBusiness();
-  const [title, description, metrics] =
+  const [title, description] =
     content[pathname] || content["/analytics"];
   const [records, setRecords] = useState([]);
   const [state, setState] = useState("loading");
-  const [dataSource, setDataSource] = useState("mongodb");
+  const [dataSource, setDataSource] = useState("unknown");
+  const [analytics, setAnalytics] = useState(null);
 
   useEffect(() => {
-    api
-      .get(config.operationalEndpoint)
-      .then(({ data }) => {
-        setRecords(data.records || []);
-        setDataSource(data.data_source || "mongodb");
+    Promise.all([
+      api.get(config.operationalEndpoint),
+      getOverallAnalytics(),
+    ]).then(([operationsResponse, analyticsResponse]) => {
+        const operations = operationsResponse.data;
+        const overall = analyticsResponse.data;
+        setRecords(operations.records || []);
+        setAnalytics(overall);
+        setDataSource(overall.data_source || operations.data_source || "unknown");
         setState("ready");
       })
       .catch(() => setState("error"));
   }, [config.operationalEndpoint]);
 
-  const metricValues = [
-    records.length,
-    records.reduce(
-      (sum, record) =>
-        sum +
-        Number(
-          record.demand || record.sales || record.volume || record.units || 0,
-        ),
-      0,
-    ),
-    new Set(records.map((record) => record.location)).size,
-  ];
+  const domainMetrics = analytics?.domain_metrics || {};
+  const metricDefinitions = domainMetricDefinitions[config.id] || [];
   return (
     <div className="space-y-6">
       <div>
@@ -107,17 +139,17 @@ export default function DomainWorkspacePage() {
       )}
       {state !== "loading" && state !== "error" && (
         <div className="grid gap-4 md:grid-cols-3">
-          {metrics.slice(0, 3).map((metric, index) => (
+          {metricDefinitions.map(([label, key]) => (
             <div
-              key={metric}
+              key={key}
               className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
             >
-              <p className="text-sm text-slate-500">{metric}</p>
+              <p className="text-sm text-slate-500">{label}</p>
               <p className="mt-3 text-3xl font-bold text-slate-900">
-                {metricValues[index] ?? 0}
+                {formatMetric(domainMetrics[key], key)}
               </p>
               <p className="mt-2 text-sm text-slate-600">
-                Measured from current records
+                Verified from {records.length} current record{records.length === 1 ? "" : "s"}
               </p>
             </div>
           ))}

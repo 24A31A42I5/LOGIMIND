@@ -48,6 +48,9 @@ Maps show the saved business hub, observed operational hotspots, and (when repor
 - `POST /api/delivery-agents/{agent_id}/location` records a validated device location and timestamp
 - `POST /api/analysis` with `today`, `week`, `month`, or `overall`
 - `POST /api/analysis/{analysis_id}/apply`
+- `POST /api/recommendations/{recommendation_id}/apply` approves a persisted recommendation
+- `POST /api/recommendations/{recommendation_id}/execute` executes the supported distributor reassignment action against an existing shipment and delivery agent
+- `POST /api/recommendations/{recommendation_id}/outcome` records an outcome only after execution and requires tenant-owned observation IDs
 - Domain operation endpoints under `/api/distributor`, `/api/restaurant`, `/api/raw-material`, and `/api/retail`
 - Existing recommendation, insight, expansion, memory, shipment, and delivery-agent routes remain available and authenticated where applicable.
 
@@ -106,3 +109,7 @@ npm run build
 ```
 
 CSV import is the supported development and production ingestion path. Demo and seed utilities are not mounted by the API and must not be used as operational evidence. Imported records retain their authenticated `userId` and domain type.
+
+### Recommendation execution
+
+The first executable action is distributor dispatch reassignment. After approval, the operator enters an existing shipment ID and delivery-agent ID. The backend validates both records belong to the authenticated tenant, updates the MongoDB shipment to the selected agent with status `Assigned`, and stores the before/after execution state on the intervention. Unsupported recommendations remain approval-only. Outcomes cannot be recorded until this execution evidence exists; no outcome or Hindsight memory is fabricated when new observations are unavailable.

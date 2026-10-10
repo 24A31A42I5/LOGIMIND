@@ -5,6 +5,7 @@ from datetime import datetime
 from typing import Any
 
 from common.ai.intelligenceService import get_business_records
+from common.analytics.analyticsService import filter_records_by_period
 from common.repository import read_domain_records, update_domain_record
 
 
@@ -70,11 +71,11 @@ def update_agent_location(
     return {'agent_id': agent_id, **location}
 
 
-def get_overall_analytics(business_type: str = 'distributor', user_id: str | None = None) -> dict[str, Any]:
+def get_overall_analytics(business_type: str = 'distributor', user_id: str | None = None, period: str = 'overall') -> dict[str, Any]:
     if business_type != 'distributor':
         from common.analytics.analyticsService import analyze_records
-        return analyze_records(business_type, get_business_records(business_type, user_id or ''))
-    shipments = get_shipments(user_id)
+        return analyze_records(business_type, filter_records_by_period(get_business_records(business_type, user_id or ''), period))
+    shipments = filter_records_by_period(get_shipments(user_id), period)
     total_deliveries = len(shipments)
     avg_duration = round(sum(item['duration_minutes'] for item in shipments) / total_deliveries, 2) if total_deliveries else 0
     delayed = sum(1 for item in shipments if item['status'] in {'Delayed', 'Failed'})
@@ -121,6 +122,8 @@ def get_overall_analytics(business_type: str = 'distributor', user_id: str | Non
         'area_hotspots': hotspots,
         'peak_delivery_period': _peak_delivery_period(shipments),
         'recurring_patterns': _delivery_patterns(shipments),
+        'data_source': 'mongodb' if shipments else 'no_data',
+        'synthetic': False,
     }
 
 

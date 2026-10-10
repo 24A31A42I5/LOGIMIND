@@ -29,7 +29,7 @@ def generate_investigation(area: str | None = None, business_type: str = 'distri
         'area': pattern_area,
         'summary': intelligence['insight'],
         'recommendations': [recommendation] if intelligence.get('recommendation') else [],
-        'memory_available': intelligence['historicalEvidence'].get('status') not in {'fallback', 'error'},
+        'memory_available': intelligence['historicalEvidence'].get('status') not in {'fallback', 'error', 'not_available'},
         'llm_used': bool(intelligence.get('recommendation')),
         'data_source': data_source,
         'synthetic': False,

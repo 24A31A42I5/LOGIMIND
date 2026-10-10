@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from core.auth import get_current_user
 from core.database import get_user_profile
 
@@ -15,8 +15,11 @@ router = APIRouter(prefix='/analytics', tags=['analytics'])
 
 
 @router.get('/overall')
-async def overall(current_user: dict = Depends(get_current_user)):
-    return await get_analytics_overall(current_user)
+async def overall(
+    current_user: dict = Depends(get_current_user),
+    period: str = Query(default='overall', pattern='^(today|week|month|overall)$'),
+):
+    return await get_analytics_overall(current_user, period)
 
 
 @router.get('/daily')
