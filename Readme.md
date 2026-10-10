@@ -36,7 +36,7 @@ Analytics support today, week, month, and overall periods. Hotspot and lowspot c
 
 `Run AI Analysis` creates a versioned analysis record. The result is shown separately from the current map. `Update Map` applies the selected analysis, updates the saved analysis status, and attempts to retain the meaningful event in Hindsight.
 
-Maps show the saved business hub and observed operational locations. Empty datasets produce an empty state rather than fabricated map regions.
+Maps show the saved business hub, observed operational hotspots, and (when reported by a device) live delivery-agent coordinates. Agent locations refresh every 15 seconds in the distributor dashboard. Empty or stale location data produces an explicit empty state rather than fabricated coordinates.
 
 ## API Highlights
 
@@ -44,6 +44,8 @@ Maps show the saved business hub and observed operational locations. Empty datas
 - `POST /api/auth/login`
 - `GET /api/profile/{user_id}` and `PUT /api/profile`
 - `GET /api/analytics/{overall,daily,monthly,areas,hotspots,trends}`
+- `GET /api/delivery-agents/locations` returns tenant-scoped observed agent locations
+- `POST /api/delivery-agents/{agent_id}/location` records a validated device location and timestamp
 - `POST /api/analysis` with `today`, `week`, `month`, or `overall`
 - `POST /api/analysis/{analysis_id}/apply`
 - Domain operation endpoints under `/api/distributor`, `/api/restaurant`, `/api/raw-material`, and `/api/retail`

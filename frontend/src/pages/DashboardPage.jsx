@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import api from "../api/client";
 import { getOverallAnalytics } from "../api/analytics";
 import { getShipments } from "../api/shipments";
-import { getAgents } from "../api/agents";
+import { getAgentLocations, getAgents } from "../api/agents";
 import OperationsMap from "../components/map/OperationsMap";
 import KpiCard from "../components/dashboard/KpiCard";
 import TodayDeliveriesTable from "../components/dashboard/TodayDeliveriesTable";
@@ -156,6 +156,8 @@ export default function DashboardPage() {
   const [overall, setOverall] = useState(null);
   const [shipments, setShipments] = useState([]);
   const [agents, setAgents] = useState([]);
+  const [agentLocations, setAgentLocations] = useState([]);
+  const [locationError, setLocationError] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [showAgents, setShowAgents] = useState(false);
@@ -182,6 +184,29 @@ export default function DashboardPage() {
 
     load();
   }, []);
+
+  useEffect(() => {
+    if (profile?.businessType && profile.businessType !== "distributor") return undefined;
+
+    let active = true;
+    const loadLocations = async () => {
+      try {
+        const { data } = await getAgentLocations();
+        if (active) {
+          setAgentLocations(data.locations || []);
+          setLocationError("");
+        }
+      } catch {
+        if (active) setLocationError("Live location data is unavailable.");
+      }
+    };
+    loadLocations();
+    const interval = window.setInterval(loadLocations, 15000);
+    return () => {
+      active = false;
+      window.clearInterval(interval);
+    };
+  }, [profile?.businessType]);
 
   if (profile?.businessType && profile.businessType !== "distributor")
     return <DomainDashboard config={config} profile={profile} />;
@@ -270,14 +295,23 @@ export default function DashboardPage() {
             <h2 className="text-lg font-semibold text-slate-900">
               Operational Map
             </h2>
-            <span className="rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-700">
-              Live view
+            <span className={`rounded-full px-2 py-1 text-xs font-medium ${
+              agentLocations.length ? "bg-green-100 text-green-700" : "bg-slate-100 text-slate-600"
+            }`}>
+              {agentLocations.length ? `${agentLocations.length} live locations` : "No live locations observed"}
             </span>
           </div>
           <OperationsMap
             areaData={overall?.area_hotspots ?? overall?.hotspots ?? []}
             hubLocation={profile?.locations?.[0]}
+            agentLocations={agentLocations}
           />
+          <p className="mt-2 text-xs text-slate-500">
+            {locationError ||
+              (agentLocations.length
+                ? "Observed agent coordinates refresh every 15 seconds."
+                : "Agent coordinates will appear after a device reports them. No coordinates are generated.")}
+          </p>
         </div>
 
         <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">

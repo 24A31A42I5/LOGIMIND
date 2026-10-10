@@ -15,6 +15,18 @@ const blueIcon = new L.Icon({
   shadowSize: [41, 41],
 });
 
+const agentIcon = new L.Icon({
+  iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
+  iconRetinaUrl:
+    "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
+  shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+  iconSize: [22, 36],
+  iconAnchor: [11, 36],
+  popupAnchor: [1, -30],
+  shadowSize: [36, 36],
+  className: "logimind-agent-marker",
+});
+
 const toCoordinate = (value, minimum, maximum) => {
   if (
     value === undefined ||
@@ -36,7 +48,11 @@ const getAreaCoordinate = (
   maximum,
 ) => toCoordinate(area[primaryName] ?? area[alternateName], minimum, maximum);
 
-export default function OperationsMap({ areaData = [], hubLocation = null }) {
+export default function OperationsMap({
+  areaData = [],
+  hubLocation = null,
+  agentLocations = [],
+}) {
   const hubLatitude = toCoordinate(hubLocation?.latitude, -90, 90);
   const hubLongitude = toCoordinate(hubLocation?.longitude, -180, 180);
   const firstPoint = areaData.find(
@@ -102,6 +118,26 @@ export default function OperationsMap({ areaData = [], hubLocation = null }) {
             <Popup>{hubLocation?.name || "Business hub"}</Popup>
           </Marker>
         )}
+
+        {agentLocations.map((agent) => (
+          <Marker
+            key={agent.agent_id}
+            position={[agent.latitude, agent.longitude]}
+            icon={agentIcon}
+          >
+            <Popup>
+              <strong>{agent.agent_id || "Delivery agent"}</strong>
+              <br />
+              {agent.status || "Observed location"}
+              {agent.recorded_at && (
+                <>
+                  <br />
+                  Updated: {new Date(agent.recorded_at).toLocaleString()}
+                </>
+              )}
+            </Popup>
+          </Marker>
+        ))}
 
         {polygons.map((polygon, index) => (
           <AreaPolygon key={`${polygon.name}-${index}`} {...polygon} />

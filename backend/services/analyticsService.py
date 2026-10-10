@@ -5,7 +5,27 @@ from datetime import datetime
 from typing import Any
 
 from common.ai.intelligenceService import get_business_records
-from common.repository import read_domain_records
+from common.repository import read_domain_records, update_domain_record
+
+
+def _agent_location(agent: dict[str, Any]) -> dict[str, Any] | None:
+	location = agent.get('last_location')
+	if not isinstance(location, dict):
+		location = agent.get('location') if isinstance(agent.get('location'), dict) else agent
+	latitude = location.get('latitude', location.get('lat'))
+	longitude = location.get('longitude', location.get('lng', location.get('lon')))
+	if not isinstance(latitude, (int, float)) or not isinstance(longitude, (int, float)):
+		return None
+	if not -90 <= latitude <= 90 or not -180 <= longitude <= 180:
+		return None
+	return {
+		'agent_id': agent.get('agent_id'),
+		'latitude': latitude,
+		'longitude': longitude,
+		'recorded_at': location.get('recorded_at', agent.get('location_updated_at')),
+		'status': agent.get('status'),
+		'region': agent.get('region'),
+	}
 
 
 def _percent(part: int, total: int) -> float:
@@ -18,6 +38,36 @@ def get_shipments(user_id: str) -> list[dict[str, Any]]:
 
 def get_delivery_agents(user_id: str) -> list[dict[str, Any]]:
     return read_domain_records('delivery_agents', user_id)
+
+
+def get_agent_locations(user_id: str) -> list[dict[str, Any]]:
+    return [
+        location
+        for agent in get_delivery_agents(user_id)
+        if (location := _agent_location(agent)) is not None
+    ]
+
+
+def update_agent_location(
+    user_id: str,
+    agent_id: str,
+    latitude: float,
+    longitude: float,
+    recorded_at: str,
+) -> dict[str, Any]:
+    location = {
+        'latitude': latitude,
+        'longitude': longitude,
+        'recorded_at': recorded_at,
+    }
+    updated = update_domain_record(
+        'delivery_agents',
+        {'userId': user_id, 'agent_id': agent_id},
+        {'last_location': location, 'location_updated_at': recorded_at},
+    )
+    if not updated:
+        raise KeyError(agent_id)
+    return {'agent_id': agent_id, **location}
 
 
 def get_overall_analytics(business_type: str = 'distributor', user_id: str | None = None) -> dict[str, Any]:

@@ -29,6 +29,19 @@ def write_domain_records(collection_name: str, records: list[dict[str, Any]]) ->
 	return len(records)
 
 
+def update_domain_record(
+	collection_name: str,
+	filter_query: dict[str, Any],
+	update: dict[str, Any],
+) -> bool:
+	"""Update one tenant-scoped operational record in MongoDB."""
+	database = get_database()
+	if database is None:
+		raise OperationalDataUnavailable('MongoDB is unavailable')
+	result = database[collection_name].update_one(filter_query, {'$set': update})
+	return result.matched_count > 0
+
+
 def domain_records_are_persisted(collection_name: str, user_id: str | None = None) -> bool:
 	if not user_id:
 		return False
