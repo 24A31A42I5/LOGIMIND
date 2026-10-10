@@ -10,7 +10,7 @@ export default function Shell() {
   const navItems = [{ to: '/dashboard', label: 'Dashboard' }, ...config.navigation];
 
   return (
-    <div className="min-h-screen bg-slate-100 text-slate-900">
+    <div className="min-h-screen bg-[#f4f7fb] text-slate-900">
       <div className="flex min-h-screen">
         <Sidebar />
 
@@ -34,7 +34,7 @@ export default function Shell() {
               </nav>
             )}
           </header>
-          <main className="p-4 md:p-6">
+          <main className="mx-auto w-full max-w-[1600px] p-4 md:p-8">
             <Outlet />
           </main>
         </div>

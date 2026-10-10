@@ -34,8 +34,8 @@ def get_expansion_analysis(business_type: str, records: list[dict[str, Any]] | N
 	for name, items in grouped.items():
 		candidate = {'name': name, 'historical_evidence': 'Derived from current domain records.'}
 		for factor in set(FACTORS[business_type] + ['coverage_gap']):
-			values = [float(item.get(factor, 0)) for item in items]
-			candidate[factor] = round(sum(values) / len(values), 2) if values else 0
+			values = [float(item[factor]) for item in items if isinstance(item.get(factor), (int, float))]
+			candidate[factor] = round(sum(values) / len(values), 2) if values else None
 		candidates.append(candidate)
 	factors = FACTORS[business_type]
 	historical = recall({'userId': user_id, 'businessType': business_type, 'query': 'expansion demand and coverage performance'})

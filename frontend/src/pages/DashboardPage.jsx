@@ -7,6 +7,15 @@ import OperationsMap from "../components/map/OperationsMap";
 import KpiCard from "../components/dashboard/KpiCard";
 import TodayDeliveriesTable from "../components/dashboard/TodayDeliveriesTable";
 import { Users, Truck, Clock3, AlertTriangle } from "lucide-react";
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 import ActiveAgentsModal from "../components/dashboard/ActiveAgentsModal";
 import Badge from "../components/common/Badge";
 import { useBusiness } from "../context/useBusiness";
@@ -44,43 +53,46 @@ function DomainDashboard({ config, profile }) {
         {config.label} operational data is unavailable.
       </div>
     );
-  const values =
-    config.id === "restaurant"
-      ? [
-          records.length,
-          records.reduce(
-            (sum, record) => sum + Number(record.sales || record.amount || 0),
-            0,
-          ),
-          records.reduce((sum, record) => sum + Number(record.demand || 0), 0),
-          new Set(records.map((record) => record.location)).size,
-        ]
-      : config.id === "raw_material"
-        ? [
-            records.reduce(
-              (sum, record) =>
-                sum + Number(record.volume || record.quantity || 0),
-              0,
-            ),
-            records.reduce(
-              (sum, record) => sum + Number(record.demand || 0),
-              0,
-            ),
-            new Set(records.map((record) => record.customer)).size,
-            new Set(records.map((record) => record.location)).size,
-          ]
-        : [
-            records.reduce(
-              (sum, record) => sum + Number(record.units || record.sales || 0),
-              0,
-            ),
-            new Set(records.map((record) => record.product)).size,
-            new Set(records.map((record) => record.customer)).size,
-            records.reduce(
-              (sum, record) => sum + Number(record.demand || 0),
-              0,
-            ),
-          ];
+  const domainMetrics = overall?.domain_metrics || {};
+  const valuesByDomain = {
+    restaurant: [
+      domainMetrics.orders,
+      domainMetrics.average_preparation_minutes,
+      domainMetrics.revenue,
+      domainMetrics.food_cost_percentage,
+    ],
+    retail: [
+      domainMetrics.revenue,
+      domainMetrics.transactions,
+      domainMetrics.units_sold,
+      domainMetrics.gross_margin_percentage,
+    ],
+    raw_material: [
+      domainMetrics.open_orders,
+      domainMetrics.available_stock,
+      domainMetrics.supplier_on_time_rate,
+      domainMetrics.average_lead_time_days,
+    ],
+    service_provider: [
+      domainMetrics.open_work_orders,
+      domainMetrics.completed_work_orders,
+      domainMetrics.average_resolution_hours,
+      domainMetrics.sla_compliance_rate,
+    ],
+  };
+  const values = valuesByDomain[config.id] || [
+    overall?.total_deliveries,
+    overall?.delay_rate,
+    overall?.average_delivery_time,
+    overall?.failed_delivery_rate,
+  ];
+  const chartData = (overall?.hotspots || []).map((item) => ({
+    name: item.location || item.area || item.name,
+    records: item.volume ?? item.record_count ?? item.deliveries ?? 0,
+    demand: item.demand,
+  }));
+  const formatValue = (value) =>
+    value === null || value === undefined ? "—" : value;
   return (
     <div className="space-y-6">
       <div>
@@ -103,10 +115,10 @@ function DomainDashboard({ config, profile }) {
           >
             <p className="text-sm text-slate-500">{metric}</p>
             <p className="mt-3 text-3xl font-bold text-slate-900">
-              {values[index] ?? 0}
+              {formatValue(values[index])}
             </p>
             <p className="mt-2 text-sm text-slate-600">
-              Current operating signal
+              {records.length ? "Measured from MongoDB records" : "No observed records"}
             </p>
           </div>
         ))}
@@ -114,12 +126,29 @@ function DomainDashboard({ config, profile }) {
       <div className="grid gap-6 xl:grid-cols-[1.7fr_0.9fr]">
         <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
           <h2 className="mb-3 text-lg font-semibold text-slate-900">
-            {config.label} operational map
+            {config.label} operating evidence
           </h2>
-          <OperationsMap
-            areaData={overall?.hotspots ?? []}
-            hubLocation={profile?.locations?.[0]}
-          />
+          {chartData.length ? (
+            <div className="h-[260px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={chartData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                  <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+                  <YAxis allowDecimals={false} />
+                  <Tooltip />
+                  <Bar dataKey="records" fill="#2563eb" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="demand" fill="#14b8a6" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          ) : (
+            <div className="flex h-[260px] items-center justify-center rounded-xl border border-dashed border-slate-300 text-sm text-slate-500">
+              No location or demand evidence is available yet.
+            </div>
+          )}
+          <p className="mt-3 text-xs text-slate-500">
+            Source: {records.length ? "MongoDB operational records" : "No data"}
+          </p>
         </div>
         <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
           <h2 className="text-lg font-semibold text-slate-900">
@@ -136,7 +165,7 @@ function DomainDashboard({ config, profile }) {
           <p className="mt-2 text-sm text-slate-600">
             Top location:{" "}
             <span className="font-semibold text-slate-900">
-              {overall?.hotspots?.[0]?.location ?? "No location yet"}
+              {overall?.hotspots?.[0]?.location ?? "No observed location"}
             </span>
           </p>
           <p className="mt-2 text-sm text-slate-600">
@@ -146,6 +175,17 @@ function DomainDashboard({ config, profile }) {
             </span>
           </p>
         </div>
+        {config.id === "distributor" && (
+          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+            <h2 className="mb-3 text-lg font-semibold text-slate-900">
+              Distributor operational map
+            </h2>
+            <OperationsMap
+              areaData={overall?.area_hotspots ?? overall?.hotspots ?? []}
+              hubLocation={profile?.locations?.[0]}
+            />
+          </div>
+        )}
       </div>
     </div>
   );

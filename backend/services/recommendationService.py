@@ -19,16 +19,16 @@ def _data_source_for(business_type: str, user_id: str) -> str:
 def generate_investigation(area: str | None = None, business_type: str = 'distributor', user_id: str = 'demo', business_name: str = '') -> dict[str, Any]:
     intelligence = generate_intelligence(business_type, user_id, business_name)
     recommendation = {
-        **intelligence['recommendation'],
+        **(intelligence['recommendation'] or {}),
         'current_evidence': intelligence['currentEvidence'],
         'historical_memory': intelligence['historicalEvidence'],
     }
     data_source = intelligence.get('data_source') or _data_source_for(business_type, user_id)
-    pattern_area = area or intelligence.get('currentSignals', {}).get('hotspots', [{}])[0].get('location') or 'Area C'
+    pattern_area = area or intelligence.get('currentSignals', {}).get('hotspots', [{}])[0].get('location')
     return {
         'area': pattern_area,
         'summary': intelligence['insight'],
-        'recommendations': [recommendation],
+        'recommendations': [recommendation] if intelligence.get('recommendation') else [],
         'memory_available': intelligence['historicalEvidence'].get('status') not in {'fallback', 'error'},
         'llm_used': bool(intelligence.get('recommendation')),
         'data_source': data_source,
