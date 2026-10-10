@@ -6,6 +6,7 @@ export default function BookingsPage() {
       title="Bookings"
       description="Understand appointment demand, service areas, and operating reach."
       endpoint="/service-provider/bookings"
+      importDataset="bookings"
       columns={[
         { key: "booking_id", label: "Booking" },
         { key: "service", label: "Service" },

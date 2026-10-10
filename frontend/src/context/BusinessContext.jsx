@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { getProfile } from '../api/profile';
 import { getBusinessConfig } from '../config/businessConfigs';
+import { isBusinessType } from '../config/businessTypes';
 import { BusinessContext } from './BusinessContextValue';
 
 function readStorage(key, fallback = null) {
@@ -12,8 +13,17 @@ function readStorage(key, fallback = null) {
   }
 }
 
+function normalizeProfile(profile) {
+  if (!profile) return null;
+  const businessType = isBusinessType(profile.businessType)
+    ? profile.businessType
+    : 'distributor';
+
+  return { ...profile, businessType };
+}
+
 export function BusinessProvider({ children }) {
-  const [profile, setProfile] = useState(() => readStorage('logimind-profile'));
+  const [profile, setProfile] = useState(() => normalizeProfile(readStorage('logimind-profile')));
   const [loading, setLoading] = useState(() => Boolean(readStorage('logimind-user')?.userId));
 
   useEffect(() => {
@@ -21,9 +31,13 @@ export function BusinessProvider({ children }) {
     if (!user?.userId) {
       return;
     }
-    const localProfile = readStorage('logimind-profile');
-    getProfile(user.userId).then((response) => setProfile(response.data)).catch(() => setProfile(localProfile)).finally(() => setLoading(false));
+
+    const localProfile = normalizeProfile(readStorage('logimind-profile'));
+    getProfile(user.userId)
+      .then((response) => setProfile(normalizeProfile(response.data)))
+      .catch(() => setProfile(localProfile))
+      .finally(() => setLoading(false));
   }, []);
 
-  return <BusinessContext.Provider value={{ profile, setProfile, loading, config: getBusinessConfig(profile?.businessType) }}>{children}</BusinessContext.Provider>;
+  return <BusinessContext.Provider value={{ profile, setProfile: (nextProfile) => setProfile(normalizeProfile(nextProfile)), loading, config: getBusinessConfig(profile?.businessType) }}>{children}</BusinessContext.Provider>;
 }

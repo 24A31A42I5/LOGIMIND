@@ -3,8 +3,8 @@ from fastapi import HTTPException
 from services.analyticsService import get_shipments
 
 
-async def list_shipments(status: str | None = None, area: str | None = None, agent_id: str | None = None, shipment_id: str | None = None):
-    shipments = get_shipments()
+async def list_shipments(user: dict, status: str | None = None, area: str | None = None, agent_id: str | None = None, shipment_id: str | None = None):
+    shipments = get_shipments(user['userId'])
     if status:
         shipments = [item for item in shipments if item['status'].lower() == status.lower()]
     if area:
@@ -16,9 +16,9 @@ async def list_shipments(status: str | None = None, area: str | None = None, age
     return shipments
 
 
-async def get_shipment_by_id(shipment_id: str):
-    shipments = get_shipments()
+async def get_shipment_by_id(shipment_id: str, user: dict):
+    shipments = get_shipments(user['userId'])
     for shipment in shipments:
         if shipment['shipment_id'] == shipment_id:
             return shipment
-        raise HTTPException(status_code=404, detail='Shipment not found')
+    raise HTTPException(status_code=404, detail='Shipment not found')

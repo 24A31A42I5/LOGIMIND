@@ -94,23 +94,21 @@ export default function ProfileSetupPage() {
           <p className="mt-2 text-sm text-slate-500">{locationStatus}</p>
         </div>
         <div className="grid gap-3 md:grid-cols-2">
-          {BUSINESS_TYPES.filter((type) => type.id !== "service_provider").map(
-            (type) => (
-              <button
-                key={type.id}
-                type="button"
-                onClick={() => setBusinessType(type.id)}
-                className={`rounded-xl border p-4 text-left ${businessType === type.id ? "border-blue-600 bg-blue-50 ring-2 ring-blue-100" : "border-slate-200"}`}
-              >
-                <span className="font-semibold text-slate-900">
-                  {type.label}
-                </span>
-                <span className="mt-1 block text-sm text-slate-600">
-                  {type.description}
-                </span>
-              </button>
-            ),
-          )}
+          {BUSINESS_TYPES.map((type) => (
+            <button
+              key={type.id}
+              type="button"
+              onClick={() => setBusinessType(type.id)}
+              className={`rounded-xl border p-4 text-left ${businessType === type.id ? "border-blue-600 bg-blue-50 ring-2 ring-blue-100" : "border-slate-200"}`}
+            >
+              <span className="font-semibold text-slate-900">
+                {type.label}
+              </span>
+              <span className="mt-1 block text-sm text-slate-600">
+                {type.description}
+              </span>
+            </button>
+          ))}
         </div>
         <div className="grid gap-4 md:grid-cols-2">
           <label className="text-sm font-medium text-slate-700">

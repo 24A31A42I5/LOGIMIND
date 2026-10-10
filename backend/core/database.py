@@ -39,7 +39,7 @@ def get_user_profile(user_id: str) -> dict[str, Any]:
 				return profile
 		except Exception:
 			pass
-	return get_fallback_profile(user_id) or {'userId': user_id, 'businessType': 'distributor', 'businessName': 'Demo business'}
+	return get_fallback_profile(user_id) or {'userId': user_id}
 
 
 def get_users_collection():

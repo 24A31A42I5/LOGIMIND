@@ -13,7 +13,6 @@ import { useBusiness } from "../context/useBusiness";
 
 function DomainDashboard({ config, profile }) {
   const [records, setRecords] = useState([]);
-  const [synthetic, setSynthetic] = useState(false);
   const [state, setState] = useState("loading");
   const [overall, setOverall] = useState(null);
 
@@ -22,7 +21,6 @@ function DomainDashboard({ config, profile }) {
       .get(config.operationalEndpoint)
       .then(({ data }) => {
         setRecords(data.records || []);
-        setSynthetic(Boolean(data.synthetic));
         setState("ready");
       })
       .catch(() => setState("error"));
@@ -97,12 +95,6 @@ function DomainDashboard({ config, profile }) {
           readiness.
         </p>
       </div>
-      {synthetic && (
-        <p className="rounded-lg bg-slate-200 px-3 py-2 text-sm text-slate-700">
-          Synthetic demo data. These values are representative, not external
-          evidence.
-        </p>
-      )}
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {config.metrics.map((metric, index) => (
           <div

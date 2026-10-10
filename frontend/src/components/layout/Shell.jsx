@@ -2,7 +2,6 @@ import { Menu, X } from 'lucide-react';
 import { useState } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 import Sidebar from './Sidebar';
-import DemoToolbar from './DemoToolbar';
 import { useBusiness } from '../../context/useBusiness';
 
 export default function Shell() {
@@ -35,9 +34,7 @@ export default function Shell() {
               </nav>
             )}
           </header>
-          <DemoToolbar />
-
-          <main className="p-4 pb-32 md:p-6 md:pb-32">
+          <main className="p-4 md:p-6">
             <Outlet />
           </main>
         </div>

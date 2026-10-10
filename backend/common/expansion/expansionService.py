@@ -25,10 +25,10 @@ def get_expansion_analysis(business_type: str, records: list[dict[str, Any]] | N
 		record_sources = {'distributor': list_operations, 'restaurant': list_orders, 'raw_material': list_supplies, 'retail': list_sales, 'service_provider': list_bookings}
 		records = record_sources[business_type](user_id)
 	if len(records) < 2:
-		return {'businessType': business_type, 'sufficientEvidence': False, 'synthetic': True, 'candidates': [], 'historicalMemory': {'available': False, 'message': 'Insufficient current data for a reliable expansion assessment.'}}
+		return {'businessType': business_type, 'sufficientEvidence': False, 'synthetic': False, 'data_source': 'mongodb', 'candidates': [], 'historicalMemory': {'available': False, 'message': 'Insufficient current data for a reliable expansion assessment.'}}
 	grouped = {}
 	for record in records:
-		location = record.get('location', 'Unknown')
+		location = record.get('location') or record.get('area') or 'Unknown'
 		grouped.setdefault(location, []).append(record)
 	candidates = []
 	for name, items in grouped.items():
@@ -38,11 +38,11 @@ def get_expansion_analysis(business_type: str, records: list[dict[str, Any]] | N
 			candidate[factor] = round(sum(values) / len(values), 2) if values else 0
 		candidates.append(candidate)
 	factors = FACTORS[business_type]
-	historical = recall(f'{business_type} expansion demand and coverage performance')
+	historical = recall({'userId': user_id, 'businessType': business_type, 'query': 'expansion demand and coverage performance'})
 	historical_available = historical.get('status') not in {'fallback', 'error'} and bool(historical.get('memories') or historical.get('results') or historical.get('data'))
 	historical_text = 'Relevant Hindsight evidence was recalled.' if historical_available else 'Historical memory currently unavailable.'
 	scored = [score_candidate(candidate, factors) for candidate in candidates]
 	for candidate in scored:
 		candidate['historical_evidence'] = historical_text
 		candidate['reason'] = 'Strong business-specific demand with a meaningful current coverage gap.'
-	return {'businessType': business_type, 'sufficientEvidence': True, 'factors': factors, 'synthetic': True, 'currentRecordCount': len(records), 'historicalMemory': {'available': historical_available, 'message': historical_text}, 'candidates': scored}
+	return {'businessType': business_type, 'sufficientEvidence': True, 'factors': factors, 'synthetic': False, 'data_source': 'mongodb', 'currentRecordCount': len(records), 'historicalMemory': {'available': historical_available, 'message': historical_text}, 'candidates': scored}

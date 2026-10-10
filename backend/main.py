@@ -1,14 +1,14 @@
 import os
 
 from dotenv import load_dotenv
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 from routers.analyticsRoutes import router as analytics_router
 from routers.analysisRoutes import router as analysis_router
 from routers.importRoutes import router as import_router
 from routers.deliveryAgentRoutes import router as delivery_agent_router
-from routers.demoRoutes import router as demo_router
 from routers.insightRoutes import router as insight_router
 from routers.memoryRoutes import router as memory_router
 from routers.expansionRoutes import router as expansion_router
@@ -21,10 +21,19 @@ from domains.retail.routes import router as retail_router
 from domains.service_provider.routes import router as service_provider_router
 from routers.recommendationRoutes import router as recommendation_router
 from routers.shipmentRoutes import router as shipment_router
+from common.repository import OperationalDataUnavailable
 
 load_dotenv()
 
 app = FastAPI(title='LOGIMIND', version='2.0.0')
+
+
+@app.exception_handler(OperationalDataUnavailable)
+async def operational_data_unavailable(_: Request, exc: OperationalDataUnavailable):
+    return JSONResponse(status_code=503, content={
+        'detail': str(exc),
+        'code': 'operational_data_unavailable',
+    })
 
 frontend_url = os.getenv('FRONTEND_URL', 'http://localhost:5173')
 app.add_middleware(
@@ -37,7 +46,6 @@ app.add_middleware(
 
 app.include_router(shipment_router, prefix='/api')
 app.include_router(delivery_agent_router, prefix='/api')
-app.include_router(demo_router, prefix='/api')
 app.include_router(analytics_router, prefix='/api')
 app.include_router(analysis_router, prefix='/api')
 app.include_router(import_router, prefix='/api')

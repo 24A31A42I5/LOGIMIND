@@ -1,5 +1,4 @@
-import json
-import os
+﻿import json
 from typing import Any
 
 import httpx
@@ -25,10 +24,10 @@ class LLMService:
                             'role': 'system',
                             'content': (
                                 'You are LOGIMIND, an AI business operations intelligence analyst. '
-                                    'Return only a JSON object with the keys title, why, expected_impact, '
-                                    'and confidence. Analyze the supplied business evidence only; never invent '
-                                    'coordinates, statistics, operational facts, or historical memories. '
-                                    'Confidence must be an integer from 0 to 100.'
+                                'Return only a JSON object with the keys title, why, expected_impact, '
+                                'and confidence. Analyze the supplied business evidence only; never invent '
+                                'coordinates, statistics, operational facts, or historical memories. '
+                                'Confidence must be an integer from 0 to 100.'
                             ),
                         },
                         {'role': 'user', 'content': json.dumps(facts)},

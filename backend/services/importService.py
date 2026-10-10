@@ -14,6 +14,7 @@ DATASETS = {
     'raw_material': {'consumers': 'supplier_orders', 'supplies': 'supplier_orders'},
     'retail': {'sales': 'retail_sales', 'consumers': 'retail_consumers'},
     'restaurant': {'orders': 'restaurant_orders', 'menu': 'restaurant_menu'},
+    'service_provider': {'bookings': 'service_bookings', 'work_orders': 'service_bookings'},
 }
 
 

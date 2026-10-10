@@ -4,8 +4,9 @@ LOGIMIND is an AI-powered multi-domain business operations intelligence platform
 
 - Distributors
 - Raw material suppliers
-- Retailers
+- Retail stores
 - Restaurants
+- Service providers
 
 It combines current operational records, validation, analytics, geospatial evidence, AI interpretation, recommendations, user actions, outcomes, and Hindsight memory. It is an operations intelligence workspace, not a generic chatbot or BI dashboard.
 
@@ -13,7 +14,7 @@ It combines current operational records, validation, analytics, geospatial evide
 
 - **Frontend:** React, Vite, JavaScript/JSX, React Router, Tailwind CSS, Leaflet/OpenStreetMap, Recharts, Axios
 - **Backend:** FastAPI, Python, Pydantic, MongoDB
-- **Operational data:** MongoDB collections scoped by `userId` and business type, with local fallbacks for development
+- **Operational data:** MongoDB collections scoped by `userId` and business type. Empty or unavailable MongoDB is reported explicitly; operational APIs never seed or synthesize records.
 - **AI:** configurable provider/model through `LLM_PROVIDER`, `LLM_MODEL`, and provider credentials
 - **Long-term memory:** Hindsight API for scoped recall and retention of meaningful operational experiences
 
@@ -25,7 +26,7 @@ The shared flow is:
 
 1. Open the welcome page.
 2. Sign up or sign in.
-3. Choose one of the four business domains.
+3. Choose one of the five business domains.
 4. Set a business name and hub. Browser geolocation is requested; manual latitude/longitude entry remains available when permission is denied or unavailable.
 5. Use the domain dashboard, analytics, AI analysis, map, recommendations, and memory views.
 
@@ -67,7 +68,7 @@ HINDSIGHT_API_KEY=
 HINDSIGHT_BANK_ID=
 ```
 
-The application remains usable when MongoDB, the LLM, Hindsight, or geolocation is unavailable. In those cases it reports the unavailable capability instead of claiming that it succeeded.
+The application keeps authentication and profile setup usable when optional services are unavailable. Operational reads and writes require MongoDB and return an explicit `503` when it cannot provide authoritative records. The LLM and Hindsight integrations report unavailable capabilities; they never fabricate evidence, memories, coordinates, or outcomes.
 
 ## Run Locally
 
@@ -102,4 +103,4 @@ npm run lint
 npm run build
 ```
 
-Demo and seed utilities live under `backend/services` and `backend/data`. Use them to populate a development MongoDB; production records should always retain their authenticated owner and business type.
+CSV import is the supported development and production ingestion path. Demo and seed utilities are not mounted by the API and must not be used as operational evidence. Imported records retain their authenticated `userId` and domain type.

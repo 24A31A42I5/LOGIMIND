@@ -5,31 +5,31 @@ from datetime import datetime
 from typing import Any
 
 from common.ai.intelligenceService import get_business_records
+from common.repository import read_domain_records
 
 
 def _percent(part: int, total: int) -> float:
     return round((part / total) * 100, 2) if total else 0.0
 
 
-def get_shipments(user_id: str | None = None) -> list[dict[str, Any]]:
-    return sorted(get_business_records('distributor', user_id or 'demo'), key=lambda item: item.get('dispatch_time', ''), reverse=True)
+def get_shipments(user_id: str) -> list[dict[str, Any]]:
+    return sorted(get_business_records('distributor', user_id), key=lambda item: item.get('dispatch_time', ''), reverse=True)
 
 
-def get_delivery_agents() -> list[dict[str, Any]]:
-    from services.seedService import get_demo_store
-    return get_demo_store()['delivery_agents']
+def get_delivery_agents(user_id: str) -> list[dict[str, Any]]:
+    return read_domain_records('delivery_agents', user_id)
 
 
 def get_overall_analytics(business_type: str = 'distributor', user_id: str | None = None) -> dict[str, Any]:
     if business_type != 'distributor':
         from common.analytics.analyticsService import analyze_records
-        return analyze_records(business_type, get_business_records(business_type, user_id or 'demo'))
+        return analyze_records(business_type, get_business_records(business_type, user_id or ''))
     shipments = get_shipments(user_id)
     total_deliveries = len(shipments)
     avg_duration = round(sum(item['duration_minutes'] for item in shipments) / total_deliveries, 2) if total_deliveries else 0
     delayed = sum(1 for item in shipments if item['status'] in {'Delayed', 'Failed'})
     failed = sum(1 for item in shipments if item['status'] == 'Failed')
-    active_agents = len(get_delivery_agents())
+    active_agents = len(get_delivery_agents(user_id))
 
     area_stats: dict[str, dict[str, Any]] = defaultdict(lambda: {'deliveries': 0, 'duration_total': 0, 'delayed': 0, 'failed': 0, 'latitudes': [], 'longitudes': []})
     for item in shipments:
@@ -101,7 +101,7 @@ def _delivery_patterns(shipments: list[dict[str, Any]]) -> list[str]:
 def get_daily_analytics(business_type: str = 'distributor', user_id: str | None = None) -> dict[str, Any]:
     if business_type != 'distributor':
         from common.analytics.analyticsService import analyze_records
-        return analyze_records(business_type, get_business_records(business_type, user_id or 'demo'))
+        return analyze_records(business_type, get_business_records(business_type, user_id or ''))
     shipments = get_shipments(user_id)
     by_hour: dict[str, int] = defaultdict(int)
     for item in shipments:
@@ -146,7 +146,7 @@ def get_hotspots(business_type: str = 'distributor', user_id: str | None = None)
 
 def get_trends(business_type: str = 'distributor', user_id: str | None = None) -> list[dict[str, Any]]:
     by_date: dict[str, list[dict[str, Any]]] = defaultdict(list)
-    for record in get_business_records(business_type, user_id or 'demo'):
+    for record in get_business_records(business_type, user_id or ''):
         date = record.get('timestamp', record.get('dispatch_time', ''))[:10]
         by_date[date].append(record)
     return [{'date': date, 'volume': len(items), 'demand': round(sum(item.get('demand', item.get('duration_minutes', 0)) for item in items) / len(items), 2)} for date, items in sorted(by_date.items())]
@@ -155,7 +155,7 @@ def get_trends(business_type: str = 'distributor', user_id: str | None = None) -
 def get_monthly_analytics(business_type: str = 'distributor', user_id: str | None = None) -> dict[str, Any]:
     if business_type != 'distributor':
         from common.analytics.analyticsService import analyze_records
-        metrics = analyze_records(business_type, get_business_records(business_type, user_id or 'demo'))
-        return {'businessType': business_type, 'currentData': metrics, 'synthetic': True}
+        metrics = analyze_records(business_type, get_business_records(business_type, user_id or ''))
+        return {'businessType': business_type, 'currentData': metrics, 'synthetic': False, 'data_source': 'mongodb'}
     shipments = get_shipments(user_id)
     return {'month': datetime.now().strftime('%B %Y'), 'total_deliveries': len(shipments), 'average_delivery_time': round(sum(item['duration_minutes'] for item in shipments) / len(shipments), 2) if shipments else 0, 'delay_rate': _percent(sum(item['status'] in {'Delayed', 'Failed'} for item in shipments), len(shipments)), 'failed_delivery_rate': _percent(sum(item['status'] == 'Failed' for item in shipments), len(shipments))}

@@ -1,19 +1,13 @@
-from typing import Any
+﻿from typing import Any
 
 from common.analytics.analyticsService import group_by_location, normalize_metrics
-from common.repository import domain_records_are_persisted, expand_demo_records, read_domain_records
-
-
-RETAIL_SALES = [
-	{'sale_id': 'SALE-001', 'product': 'Home essentials', 'location': 'Area C', 'units': 94, 'demand': 84, 'customer_density': 88, 'purchasing_potential': 79, 'coverage': 36},
-	{'sale_id': 'SALE-002', 'product': 'Personal care', 'location': 'Area C', 'units': 71, 'demand': 76, 'customer_density': 82, 'purchasing_potential': 75, 'coverage': 36},
-	{'sale_id': 'SALE-003', 'product': 'Stationery', 'location': 'Area B', 'units': 42, 'demand': 54, 'customer_density': 60, 'purchasing_potential': 62, 'coverage': 81},
-]
+from common.repository import domain_records_are_persisted, read_domain_records
 
 
 def list_sales(user_id: str | None = None) -> list[dict[str, Any]]:
-	return read_domain_records('retail_sales', expand_demo_records(RETAIL_SALES), user_id)
+	return read_domain_records('retail_sales', user_id or '')
 
 
 def get_metrics(user_id: str | None = None) -> dict[str, Any]:
-	return {'businessType': 'retail', 'currentData': normalize_metrics(list_sales(user_id)), 'hotspots': group_by_location(list_sales(user_id)), 'synthetic': not domain_records_are_persisted('retail_sales', user_id)}
+	records = list_sales(user_id)
+	return {'businessType': 'retail', 'currentData': normalize_metrics(records), 'hotspots': group_by_location(records), 'synthetic': False, 'data_source': 'mongodb'}

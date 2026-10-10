@@ -26,4 +26,7 @@ async def outcome(recommendation_id: str, payload: OutcomeRequest, current_user:
     after = payload.metrics_after or ({'delivery_time': payload.after_minutes} if payload.after_minutes is not None else {})
     if not before or not after:
         raise HTTPException(status_code=400, detail='Provide metrics_before and metrics_after')
-    return record_recommendation_outcome(recommendation_id, before, after, payload.notes, current_user)
+    try:
+        return record_recommendation_outcome(recommendation_id, before, after, payload.notes, current_user)
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc

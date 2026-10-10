@@ -63,13 +63,15 @@ export default function DomainWorkspacePage() {
     content[pathname] || content["/analytics"];
   const [records, setRecords] = useState([]);
   const [state, setState] = useState("loading");
+  const [dataSource, setDataSource] = useState("mongodb");
 
   useEffect(() => {
     api
       .get(config.operationalEndpoint)
       .then(({ data }) => {
         setRecords(data.records || []);
-        setState(data.synthetic ? "synthetic" : "ready");
+        setDataSource(data.data_source || "mongodb");
+        setState("ready");
       })
       .catch(() => setState("error"));
   }, [config.operationalEndpoint]);
@@ -95,12 +97,9 @@ export default function DomainWorkspacePage() {
         <h1 className="mt-1 text-3xl font-bold text-slate-900">{title}</h1>
         <p className="mt-2 text-slate-600">{description}</p>
       </div>
-      {state === "synthetic" && (
-        <p className="rounded-lg bg-slate-200 px-3 py-2 text-sm text-slate-700">
-          Synthetic demo data. These signals are representative and are not
-          external geographic evidence.
-        </p>
-      )}
+      <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+        Source: {dataSource === "mongodb" ? "MongoDB operational records" : dataSource}
+      </p>
       {state === "error" && (
         <p className="rounded-lg bg-amber-50 p-4 text-amber-800">
           {title} data is unavailable. Check the domain service and try again.
@@ -122,6 +121,12 @@ export default function DomainWorkspacePage() {
               </p>
             </div>
           ))}
+        </div>
+      )}
+      {state === "ready" && records.length === 0 && (
+        <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-6 text-slate-600">
+          No operational records are available for this workspace yet. Import
+          records or connect the domain source before requesting analysis.
         </div>
       )}
       {state === "loading" && (

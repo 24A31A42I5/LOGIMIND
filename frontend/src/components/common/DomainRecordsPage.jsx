@@ -12,7 +12,7 @@ export default function DomainRecordsPage({
 }) {
   const { config } = useBusiness();
   const [records, setRecords] = useState([]);
-  const [synthetic, setSynthetic] = useState(false);
+  const [dataSource, setDataSource] = useState("mongodb");
   const [state, setState] = useState("loading");
 
   function refresh() {
@@ -21,7 +21,7 @@ export default function DomainRecordsPage({
       .get(endpoint)
       .then(({ data }) => {
         setRecords(data.records || []);
-        setSynthetic(Boolean(data.synthetic));
+        setDataSource(data.data_source || "mongodb");
         setState("ready");
       })
       .catch(() => setState("error"));
@@ -32,7 +32,7 @@ export default function DomainRecordsPage({
       .get(endpoint)
       .then(({ data }) => {
         setRecords(data.records || []);
-        setSynthetic(Boolean(data.synthetic));
+        setDataSource(data.data_source || "mongodb");
         setState("ready");
       })
       .catch(() => setState("error"));
@@ -59,12 +59,9 @@ export default function DomainRecordsPage({
       {importDataset && (
         <CsvImportPanel dataset={importDataset} onImported={refresh} />
       )}
-      {synthetic && (
-        <p className="rounded-lg bg-slate-200 px-3 py-2 text-sm text-slate-700">
-          Synthetic demo data. Replace with connected operational records for
-          live evidence.
-        </p>
-      )}
+      <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+        Source: {dataSource === "mongodb" ? "MongoDB operational records" : dataSource}
+      </p>
       <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm">
         <table className="min-w-full text-left text-sm">
           <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">

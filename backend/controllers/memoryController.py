@@ -1,12 +1,15 @@
 from core.database import get_user_profile
 from services.hindsightService import hindsight_service
-from services.seedService import get_demo_store
 
 
 async def get_memory_recent(user: dict):
     profile = get_user_profile(user['userId'])
-    business_type = profile.get('businessType', 'distributor')
-    return [item for item in get_demo_store()['memories'] if item.get('businessType', 'distributor') == business_type]
+    result = hindsight_service.recall_memory({
+        'userId': user['userId'],
+        'businessType': profile.get('businessType', 'distributor'),
+        'query': 'recent verified operational experiences',
+    })
+    return result.get('memories', []) if result.get('status') not in {'fallback', 'error'} else []
 
 
 async def recall_memory(query: str, user: dict):
@@ -30,6 +33,6 @@ async def get_memory_stats(user: dict):
     return {
         'total_memories': len(memories),
         'recent_patterns': [item['pattern'] for item in memories],
-        'successful_interventions': 2,
-        'unsuccessful_interventions': 1,
+        'successful_interventions': sum(1 for item in memories if item.get('outcome') == 'successful'),
+        'unsuccessful_interventions': sum(1 for item in memories if item.get('outcome') in {'declined', 'unsuccessful'}),
     }
